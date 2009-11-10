@@ -104,9 +104,9 @@ def genReport(day, cursor):
        
         chart['total'] = chart.get('total',0) + len(rows)
         
+        AvgTime = {}
         for row in rows:
             r = {}
-            AVGByISP = {}
             r['domain'] = domain
             r['city'] = row['city']
             r['isp'] = row['isp']
@@ -115,11 +115,15 @@ def genReport(day, cursor):
             chart['rows'].append(r) 
             
             hour = row['date_c'].hour
-            isp = '%s %s %s' % (row['city'], row['isp'])
-            #lt = AVGByISP.get(isp, 0)
-            lines[domain]['values'][hour] = row['av_time']
-            if row['loadtime'] > chart['y_axis']['max']:
-                chart['y_axis']['max'] = row['loadtime'] + 10000
+            
+            lt = AvgTime.get(hour, 0)
+            if lt:
+                lt = (lt + row['loadtime'])/2
+            else:
+                lt = row['loadtime']
+            lines[domain]['values'][hour] = lt
+            if lt > chart['y_axis']['max']:
+                chart['y_axis']['max'] = lt + 10000
             
         chart['elements'].append(lines[domain])
         
