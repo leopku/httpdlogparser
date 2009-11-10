@@ -1,0 +1,51 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+<script type="text/javascript" src="js/json/json2.js"></script>
+<script type="text/javascript" src="js/swfobject.js"></script>
+	<link rel="stylesheet" type="text/css" href="css/shadow.css">
+	<link rel="stylesheet" type="text/css" href="css/linkbutton.css">
+	<link rel="stylesheet" type="text/css" href="css/pagination.css">
+	<link rel="stylesheet" type="text/css" href="css/datagrid.css">
+	<link rel="stylesheet" type="text/css" href="css/dialog.css">
+	<link rel="stylesheet" type="text/css" href="css/messager.css">
+	<link rel="stylesheet" type="text/css" href="css/icon.css">
+	<script type="text/javascript" src="js/jquery-1.3.2.min.js"></script>
+	<script type="text/javascript" src="js/jquery.draggable.js"></script>
+	<script type="text/javascript" src="js/jquery.resizable.js"></script>
+	<script type="text/javascript" src="js/jquery.linkbutton.js"></script>
+	<script type="text/javascript" src="js/jquery.pagination.js"></script>
+	<script type="text/javascript" src="js/jquery.datagrid.js"></script>
+	<script type="text/javascript" src="js/jquery.shadow.js"></script>
+	<script type="text/javascript" src="js/jquery.dialog.js"></script>
+	<script type="text/javascript" src="js/jquery.messager.js"></script>
+	<script type="text/javascript" src="js/jquery.query-2.1.7.js"></script>
+	<script type="text/javascript" src="js/stats.js"></script>
+<script type="text/javascript">
+function open_flash_chart_data()
+{
+   //alert( 'reading data' );
+   return JSON.stringify(chart2);
+}
+
+var chart2={
+       'title': {'text': 'Report for response time.', 'style': '{font-size:20px; color:#0000ff; font-family: Verdana; text-align: center;}'},
+	"x_legend": {"text": "Date: 2009-07-23", "style": "{color: #736AFF;font-size: 12px;}"},
+	"y_legend": {"text": "Average response time (ms)", "style": "{color:#736AFF; font-size: 12px;}"},
+	"elements": [
+		{"type": "line", "values": [45,386,70,145,700,116,921,437,753],"colour":"#ffae00","text": "www1", "dot-style": {"type":"solid-dot","on-click":  "trace:http://eden"}},
+		{"type": "line", "values": [912,632,743,945,1565,767,623,923,165],"colour":"#52aa4b","text": "www", "dot-style":{"type":"solid-dot"}}],
+	"x_axis": {"stroke": 1, "labels": {"rotate": 45, "labels":["00:00","01: 00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00","08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00","15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00","22:00", "23:00"]}},
+	"y_axis": {"stroke": 1, "offset": false, "max": "2000"}
+};
+</script>
+</head>
+<body>
+<div id="my_chart"></div>
+<script type="text/javascript">
+swfobject.embedSWF("open-flash-chart.swf", "my_chart", "750", "600","9.0.0");
+</script>
+	<table id="tt"></table>
+	<div id="dlg"></div>
+</body>
+</html>
