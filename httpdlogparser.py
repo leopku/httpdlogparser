@@ -35,15 +35,15 @@ class HttpdLogParser:
         
     def parseLog(self):
         f = open(self.logfile, 'r')
-        client = Client()
         for line in f.xreadlines():
+            client = Client()
             info = line.split('"')
             client.agent = info[-2]
             ip_datetime = info[0].split(' ')
             client.ip = ip_datetime[0]
             
             i = pyip.IPInfo(IPFILE)
-            city, isp = i.getIPAddr(self.ip)
+            city, isp = i.getIPAddr(client.ip)
             client.city = city.decode('utf8')
             client.isp = isp.decode('utf8')
             
@@ -121,7 +121,7 @@ def genReport(day, cursor):
        
         chart['total'] = chart.get('total',0) + len(rows)
         
-        AvgTime = {}
+        #AvgTime = {}
         for row in rows:
             r = {}
             r['domain'] = domain
@@ -133,12 +133,16 @@ def genReport(day, cursor):
             
             hour = row['date_c'].hour
             
-            lt = AvgTime.get(hour, 0)
+            #lt = AvgTime.get(hour, 0)
+            #lt = lines[domain]['values'].get(hour, 0)
+            lt = lines[domain]['values'][hour]
             if lt:
                 lt = (lt + row['loadtime'])/2
             else:
                 lt = row['loadtime']
+            #AvgTime[hour] = lt
             lines[domain]['values'][hour] = lt
+            
             if lt > chart['y_axis']['max']:
                 chart['y_axis']['max'] = lt + 10000
             
@@ -181,9 +185,8 @@ if __name__ == '__main__':
         logger.info('[log file]%s' % log)
         hlp =  HttpdLogParser(log)
         clients = hlp.parseLog()
-        sql = ''
         for client in clients: 
-            sql += "INSERT INTO log (ip, city, isp, date_c, loadtime, domain, ref) VALUES ('%s', '%s', '%s', '%s', %d, '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.loadtime, client.domain, client.ref)
+            sql = "INSERT INTO log (ip, city, isp, date_c, loadtime, domain, ref) VALUES ('%s', '%s', '%s', '%s', %d, '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.loadtime, client.domain, client.ref)
         cursor.execute(sql)
         
     genReport(yesterday ,cursor)

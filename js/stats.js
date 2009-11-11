@@ -2,30 +2,24 @@ var  ofc = $.query.get('ofc');
 
 function createGrid(){
 	$('#tt').datagrid({
-		title: 'IP Address',
+		title: 'Response time per ISP',
 		width: 800,
-		height: 350,
+		height: 600,
 		striped: true,
 		url: ofc,
 		fields: [
-			'orderNo','employee','country','customer','y2005','y2006','y2007','y2008','deliveryDate'
+			'datetime','city','isp','domain','time'
 		],
 		columns: [[
-			{title:'单据编号',field:'orderNo',rowspan:2,width:100},
-			{title:'业务员',field:'employee',rowspan:2,width:100},
-			{title:'单据信息',colspan:7}
-		],[
-			{title:'国家',field:'country',width:100},
-			{title:'客户',field:'customer',width:100},
-			{title:'2005',field:'y2005',width:60},
-			{title:'2006',field:'y2006',width:60},
-			{title:'2007',field:'y2007',width:60},
-			{title:'2008',field:'y2008',width:60},
-			{title:'日期',field:'deliveryDate',width:100}
+			{title:'Date & Time',field:'datetime',width:150},
+			{title:'City',field:'city',width:150},
+			{title:'ISP',field:'isp',width:150},
+			{title:'Domain',field:'domain',width:100},
+			{title:'Load Time',field:'time',width:100, align: 'right'}
 		]],
-		sortName: 'orderNo',
+		sortName: 'time',
 		sortOrder: 'asc',
-		pagination: true/*,
+		pagination: false/*,
 		toolbar: [{
 			text:'新增',
 			iconCls:'icon-add',
