@@ -16,6 +16,7 @@ IPFILE = os.path.join(os.path.dirname(__file__), 'QQWry.Dat')
 
 class Client:
     """ client infomation """
+    
     def __init__(self):
         self.ip = None
         self.city = None
@@ -107,7 +108,8 @@ def genReport(day, cursor):
     lines = {}
     chart['rows'] = []
     for domain in domains:
-        sql = 'SELECT ip, city, isp, date_c, loadtime, domain, agent FROM log WHERE domain="%s" AND date_c>="%s 00:00:00" AND date_c<"%s 00:00:00"' % (domain, day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
+        #sql = 'SELECT ip, city, isp, date_c, loadtime, domain, agent FROM log WHERE domain="%s" AND date_c>="%s 00:00:00" AND date_c<"%s 00:00:00"' % (domain, day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
+        sql = 'SELECT ip, city, isp, date_c, loadtime, domain, ref FROM log WHERE domain="%s" AND date_c BETWEEN "%s 00:00:00" AND "%s 00:00:00"' % (domain, day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
         cursor.execute(sql)
         
         rows = cursor.fetchall()
@@ -129,6 +131,7 @@ def genReport(day, cursor):
             r['isp'] = row['isp']
             r['datetime'] = row['date_c'].strftime('%m/%d/%Y %H:%M:%S')
             r['time'] = row['loadtime']
+            r['ref'] = row['ref']
             chart['rows'].append(r) 
             
             hour = row['date_c'].hour

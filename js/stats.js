@@ -8,14 +8,15 @@ function createGrid(){
 		striped: true,
 		url: ofc,
 		fields: [
-			'datetime','city','isp','domain','time'
+			'datetime','city','isp','domain','time', 'ref'
 		],
 		columns: [[
 			{title:'Date & Time',field:'datetime',width:150},
 			{title:'City',field:'city',width:150},
 			{title:'ISP',field:'isp',width:150},
 			{title:'Domain',field:'domain',width:100},
-			{title:'Load Time',field:'time',width:100, align: 'right'}
+			{title:'Load Time',field:'time',width:100, align: 'right'},
+            {title: 'URL', field:'ref', width:200}
 		]],
 		sortName: 'time',
 		sortOrder: 'asc',
