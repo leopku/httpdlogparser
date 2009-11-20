@@ -94,7 +94,7 @@ class HttpdLogParser:
 
 def genReport(day, cursor):
     #dir = '/Data/webapps/zx/data'
-    report = os.path.join(os.path.dirname(__file__), 'data', day.strftime('%Y-%m-%d'))
+    report = os.path.join(os.path.dirname(__file__), '9949', day.strftime('%Y-%m-%d'))
     #report = '%s/%s' % (dir, day.strftime('%Y-%m-%d'))
     f_report  = open(report, 'w+')
     chart = {}
@@ -104,18 +104,17 @@ def genReport(day, cursor):
     chart['title']['style']='{font-size:20px; color:#0000ff; font-family: Verdana; text-align: center;}'
     
     chart['x_legend']={}
-    chart['x_legend']['text']='Date: %s' % day.strftime('%Y-%m-%d')
+    chart['x_legend']['text']='%s days/weeks/monthes before' 
     chart['x_legend']['style']='{color: #736AFF;font-size: 12px;}'
     chart['y_legend']={}
-    chart['y_legend']['text']='time(ms)'
+    chart['y_legend']['text']='click counts'
     chart['y_legend']['style']='{color:#736AFF; font-size: 12px;}'
     
     chart['x_axis'] = {}
     chart['x_axis']['stroke'] = 1
     chart['x_axis']['labels'] = {}
     chart['x_axis']['labels']['rotate'] = 45
-    chart['x_axis']['labels']['labels'] = ["00:00","01: 00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00","08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00","15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00",
-"22:00", "23:00"]
+    chart['x_axis']['labels']['labels'] = ["7","6", "5", "4", "3", "2", "1"]
     
     chart['y_axis'] = {}
     chart['y_axis']['stroke'] = 1
@@ -125,57 +124,62 @@ def genReport(day, cursor):
     
     chart['elements']=[]
     d = datetime.timedelta(days=1)
-    #t_tmp = time.strptime(day, '%Y-%m-%d')
-    #d_day = datetime.datetime(*t_tmp[:6])
-    #nextday = d_day + d
     nextday = day + d
-    domains = ['www', 'my', 'www1']
-    colors = {'www': '#ffae00', 'my':'#52aa4b', 'www1': '#ff0000'}
+
+    #domains = ['www', 'my', 'www1']
+    periods = {'day':'%Y-%m-%d', 'week':'%u', 'month':'%Y-%m'}
+    colors = {'day': '#ffae00', 'week':'#52aa4b', 'month': '#ff0000'}
     lines = {}
     chart['rows'] = []
-    for domain in domains:
+    for period,format in periods.items():
         #sql = 'SELECT ip, city, isp, date_c, loadtime, domain, agent FROM log WHERE domain="%s" AND date_c>="%s 00:00:00" AND date_c<"%s 00:00:00"' % (domain, day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
-        sql = 'SELECT ip, city, isp, date_c, loadtime, domain, ref FROM log WHERE domain="%s" AND date_c BETWEEN "%s 00:00:00" AND "%s 00:00:00"' % (domain, day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
+        #sql = 'SELECT dest, count(*) AS cnt FROM log WHERE domain="%s" AND date_c BETWEEN "%s 00:00:00" AND "%s 00:00:00"' % (domain, day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
+        sql = "SELECT dest, date_c, DATE_FORMAT(date_c, '%s') AS period, SUM(*) AS totalclick FROM log GROUP BY period DESC LIMIT 7;" % format
         cursor.execute(sql)
         
         rows = cursor.fetchall()
-        lines[domain] = {}
-        lines[domain]['type'] = 'line'
-        lines[domain]['colour'] = colors[domain]
-        lines[domain]['text'] = domain
-        lines[domain]['dot-style'] = {}
-        lines[domain]['dot-style']['type'] = 'solid-dot'
-        lines[domain]['values'] = [0 for col in range(24)]
+        lines[period] = {}
+        lines[period]['type'] = 'line'
+        lines[period]['colour'] = colors[period]
+        lines[period]['text'] = period
+        lines[period]['dot-style'] = {}
+        lines[period]['dot-style']['type'] = 'solid-dot'
+        lines[period]['values'] = [0 for _ in range(7)]
        
-        chart['total'] = chart.get('total',0) + len(rows)
+        if period == 'day':
+            chart['total'] = chart.get('total',0) + len(rows)
         
-        #AvgTime = {}
         for row in rows:
-            r = {}
-            r['domain'] = domain
-            r['city'] = row['city']
-            r['isp'] = row['isp']
-            r['datetime'] = row['date_c'].strftime('%m/%d/%Y %H:%M:%S')
-            r['time'] = row['loadtime']
-            r['ref'] = row['ref']
-            chart['rows'].append(r) 
+            index = rows.index(row)
+            lines[period]['values'][index] = row['totalclick']
             
-            hour = row['date_c'].hour
-            
-            #lt = AvgTime.get(hour, 0)
-            #lt = lines[domain]['values'].get(hour, 0)
-            lt = lines[domain]['values'][hour]
-            if lt:
-                lt = (lt + row['loadtime'])/2
-            else:
-                lt = row['loadtime']
-            #AvgTime[hour] = lt
-            lines[domain]['values'][hour] = lt
-            
-            if lt > chart['y_axis']['max']:
-                chart['y_axis']['max'] = lt + 10000
-            
-        chart['elements'].append(lines[domain])
+            if row['totalclick'] > chart['y_axis']['max']:
+                chart['y_axis']['max'] = row['totalclick'] + 1000
+#        for row in rows:
+#            r = {}
+#            r['city'] = row['city']
+#            r['isp'] = row['isp']
+#            r['datetime'] = row['date_c'].strftime('%m/%d/%Y %H:%M:%S')
+#            r['dest'] = row['dest']
+#            r['ref'] = row['ref']
+#            chart['rows'].append(r) 
+#            
+#            hour = row['date_c'].hour
+#            
+#            #lt = AvgTime.get(hour, 0)
+#            #lt = lines[domain]['values'].get(hour, 0)
+#            lt = lines[period]['values'][hour]
+#            if lt:
+#                lt = (lt + row['loadtime'])/2
+#            else:
+#                lt = row['loadtime']
+#            #AvgTime[hour] = lt
+#            lines[period]['values'][hour] = lt
+#            
+#            if lt > chart['y_axis']['max']:
+#                chart['y_axis']['max'] = lt + 10000
+        
+    chart['elements'].append(lines[period])
         
     f_report.write(json.dumps(chart))
     f_report.close()
@@ -202,22 +206,32 @@ if __name__ == '__main__':
         conn = MySQLdb.connect(host='10.10.208.59',
                                user='httpdlog',
                                passwd='httpdlog',
-                               db='httpdlog',
+                               db='9949',
                                charset='utf8')
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
     except MySQLdb.Error, e:
         print 'Connecting MySQL error!'
         sys.exit(1)
         
-    logs = glob.glob('/logs/zx_360quan-access_log.%s??' % yesterday.strftime('%Y%m%d'))
+    logs = glob.glob('/Data/log/9949/9949.cn-access_log.%s??' % yesterday.strftime('%Y%m%d'))
+    
     for log in logs:
         logger.info('[log file]%s' % log)
         hlp =  HttpdLogParser(log)
         clients = hlp.parseLog()
-        for client in clients: 
-            sql = "INSERT INTO log (ip, city, isp, date_c, loadtime, domain, ref) VALUES ('%s', '%s', '%s', '%s', %d, '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.loadtime, client.domain, client.ref)
-        cursor.execute(sql)
-        
+
+        counts = {}
+        date = None
+        for client in clients:
+            counts[client.dest] = counts.get(client.dest, 0) + 1
+            date = client.datetime 
+            #sql = "INSERT INTO log (ip, city, isp, date_c, loadtime, domain, ref) VALUES ('%s', '%s', '%s', '%s', %d, '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.loadtime, client.domain, client.ref)
+            sql = "INSERT INTO log (ip, city, isp, date_c, dest, ref, agent) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.dest, client.ref, client.agent)
+            cursor.execute(sql)
+        for k,v in counts.items():
+            sql= "INSERT INTO daycount (dest, cnt, date_c) VALUES ('%s', %d, '%s');" % (k, v, date.strftime('%Y-%m-%d %H:00:00'))
+            cursor.execute(sql)
+    
     genReport(yesterday ,cursor)
     cursor.close()
     conn.close()
@@ -225,7 +239,7 @@ if __name__ == '__main__':
     msg = """
     The average response time report. 
     Date: %s
-    Link: <a href='http://zx.360quan.com/stats.html?ofc=data/%s' target='_blank'>view report</a>
+    Link: <a href='http://zx.360quan.com/stats.html?ofc=9949/%s' target='_blank'>view report</a>
     """ % (yesterday.strftime('%Y-%m-%d'), yesterday.strftime('%Y-%m-%d'))
     f_mail = open('mail.txt', 'w+')
     f_mail.write(msg)
