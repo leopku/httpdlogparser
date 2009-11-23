@@ -4,25 +4,25 @@ var date = ofc.substring(5, 15);
 
 function createGrid(){
 	if (site == '9949'){
-        $('#tt').datagrid({
-            title: 'Total Clicks of ' + date,
-            width: 800,
-            height: 600,
-            striped: true,
-            url: ofc,
-            fields: ['count', 'dest'],
-            columns: [[
-                {title: 'Date', field: 'date'},
-                {title: 'Click Count', field: 'count'},
-                {title: 'Destination', field: 'dest'}
-            ]],
-            sortName: 'count',
-            pagination: false
-        })
-    }
+	        $('#tt').datagrid({
+	            title: 'Total Clicks of ' + date,
+	            width: 800,
+	            height: 600,
+	            striped: true,
+	            url: ofc,
+	            fields: ['name', 'count', 'dest'],
+	            columns: [[
+	                {title: 'Name', field: 'name'},
+	                {title: 'Click Count', field: 'count'},
+	                {title: 'Destination', field: 'dest'}
+	            ]],
+	            sortName: 'count',
+	            pagination: false
+	        })
+    	}
 	else {
-        $('#tt').datagrid({
-			title: 'Response time per ISP',
+        	$('#tt').datagrid({
+			title: 'Response Time per ISP',
 			width: 800,
 			height: 600,
 			striped: true,

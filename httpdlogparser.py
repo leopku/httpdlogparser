@@ -11,6 +11,7 @@ import glob
 import os
 import os.path
 import simplejson as json
+from urllib import unquote
 
 IPFILE = os.path.join(os.path.dirname(__file__), 'QQWry.Dat')
 
@@ -47,7 +48,7 @@ class HttpdLogParser:
             info = line.split('"')
 
             #pattern = re.compile(r't=(?P<time>\d+)&r=(?P<ref>http://(?P<domain>\S+?).360quan.com\S+)')
-            pattern = re.compile(r'POST /u=(?P<dest>http://.*?) HTTP')
+            pattern = re.compile(r'POST /go.html\?name=(?P<name>.*?)&u=(?P<dest>http://.*?) HTTP')
             m = pattern.search(info[1])
             # client.loadtime = None
             client.ref = info[3]
@@ -57,6 +58,13 @@ class HttpdLogParser:
                 #client.ref = m.group('ref')
                 #client.domain = m.group('domain')
                 client.dest = m.group('dest')
+                name = m.group('name')
+                if name == 'undefined'
+                    name = None
+                else:
+                    name = unquote(name.decode('GB2312').encode('UTF-8'))
+                client.name = name
+                #client.dest = m.group('dest')
 
                 client.agent = info[-2]
                 ip_datetime = info[0].split(' ')
