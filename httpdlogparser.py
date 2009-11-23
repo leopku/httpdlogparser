@@ -24,7 +24,7 @@ class Client:
         self.datetime = None
         # self.loadtime = None
         self.ref = None
-        # self.domain = None
+        self.name = None
         self.agent = None
         self.dest = None
 
@@ -104,7 +104,7 @@ def genReport(day, cursor):
     chart['title']['style']='{font-size:20px; color:#0000ff; font-family: Verdana; text-align: center;}'
     
     chart['x_legend']={}
-    chart['x_legend']['text']='%s days/weeks/monthes before' 
+    chart['x_legend']['text']='Days/Weeks/Monthes' 
     chart['x_legend']['style']='{color: #736AFF;font-size: 12px;}'
     chart['y_legend']={}
     chart['y_legend']['text']='click counts'
@@ -113,28 +113,29 @@ def genReport(day, cursor):
     chart['x_axis'] = {}
     chart['x_axis']['stroke'] = 1
     chart['x_axis']['labels'] = {}
-    chart['x_axis']['labels']['rotate'] = 45
+    chart['x_axis']['labels']['rotate'] = 0
     chart['x_axis']['labels']['labels'] = ["7","6", "5", "4", "3", "2", "1"]
     
     chart['y_axis'] = {}
     chart['y_axis']['stroke'] = 1
     chart['y_axis']['visible'] = True
     chart['y_axis']['offset'] = False
-    chart['y_axis']['max'] =  5000
+    chart['y_axis']['max'] =  50
     
     chart['elements']=[]
     d = datetime.timedelta(days=1)
     nextday = day + d
 
     #domains = ['www', 'my', 'www1']
-    periods = {'day':'%Y-%m-%d', 'week':'%u', 'month':'%Y-%m'}
-    colors = {'day': '#ffae00', 'week':'#52aa4b', 'month': '#ff0000'}
+    periods = {'Day':'%Y-%m-%d', 'Week':'%u', 'Month':'%Y-%m'}
+    colors = {'Day': '#ffae00', 'Week':'#52aa4b', 'Month': '#ff0000'}
     lines = {}
     chart['rows'] = []
     for period,format in periods.items():
         #sql = 'SELECT ip, city, isp, date_c, loadtime, domain, agent FROM log WHERE domain="%s" AND date_c>="%s 00:00:00" AND date_c<"%s 00:00:00"' % (domain, day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
         #sql = 'SELECT dest, count(*) AS cnt FROM log WHERE domain="%s" AND date_c BETWEEN "%s 00:00:00" AND "%s 00:00:00"' % (domain, day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
-        sql = "SELECT dest, date_c, DATE_FORMAT(date_c, '%s') AS period, SUM(*) AS totalclick FROM log GROUP BY period DESC LIMIT 7;" % format
+        sql = "SELECT name, dest, date_c, DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log GROUP BY period DESC;" % format
+        logger.info(sql)
         cursor.execute(sql)
         
         rows = cursor.fetchall()
@@ -146,18 +147,21 @@ def genReport(day, cursor):
         lines[period]['dot-style']['type'] = 'solid-dot'
         lines[period]['values'] = [0 for _ in range(7)]
        
-        if period == 'day':
+        if period == 'Day':
             chart['total'] = chart.get('total',0) + len(rows)
-        
+	
+        rows_list = list(rows)
         for row in rows:
-            index = rows.index(row)
-            lines[period]['values'][index] = row['totalclick']
+            index = rows_list.index(row)
+            #lines[period]['values'][-1-index] = row['cnt']
+            lines[period]['values'][-1-index]['value'] = row['cnt']
+            lines[period]['values'][-1-index]['tip'] = '%s:%s<br>#val#' % (period, row['period'])
             
-            if row['totalclick'] > chart['y_axis']['max']:
-                chart['y_axis']['max'] = row['totalclick'] + 1000
+            if row['cnt'] > chart['y_axis']['max']:
+                chart['y_axis']['max'] = row['cnt'] + 1000
         chart['elements'].append(lines[period])
 
-    sql = "SELECT dest, COUNT(id) AS cnt FROM log WHERE date_c BETWEEN '%s 00:00:00' AND '%s 00:00:00' GROUP BY dest ORDER BY cnt DESC;" % (day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
+    sql = "SELECT name, dest, COUNT(id) AS cnt FROM log WHERE date_c BETWEEN '%s 00:00:00' AND '%s 00:00:00' GROUP BY dest ORDER BY cnt DESC;" % (day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
     logger.info('[grid sql]%s' % sql)
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -165,6 +169,7 @@ def genReport(day, cursor):
     #sql = "SELECT dest, DATE_FORMAT(date_c, '%Y-%m-%d') AS period, COUNT(id) AS cnt FROM log WHERE date_c >= SUBDATE(NOW(), INTERVAL 7 DAY) GROUP BY period;"
     for row in rows:
         r = {}
+        r['name'] = row['name']
         r['dest'] = row['dest']
         r['count'] = row['cnt']
         chart['rows'].append(r)                
@@ -238,23 +243,23 @@ if __name__ == '__main__':
             counts[client.dest] = counts.get(client.dest, 0) + 1
             date = client.datetime 
             #sql = "INSERT INTO log (ip, city, isp, date_c, loadtime, domain, ref) VALUES ('%s', '%s', '%s', '%s', %d, '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.loadtime, client.domain, client.ref)
-            sql = "INSERT INTO log (ip, city, isp, date_c, dest, ref, agent) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.dest, client.ref, client.agent)
-            cursor.execute(sql)
-        for k,v in counts.items():
-            sql= "INSERT INTO daycount (dest, cnt, date_c) VALUES ('%s', %d, '%s');" % (k, v, date.strftime('%Y-%m-%d %H:00:00'))
-            cursor.execute(sql)
+            sql = "INSERT INTO log (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.dest, client.ref, client.agent, client.name)
+        #    cursor.execute(sql)
+        #for k,v in counts.items():
+        #    sql= "INSERT INTO daycount (dest, cnt, date_c) VALUES ('%s', %d, '%s');" % (k, v, date.strftime('%Y-%m-%d %H:00:00'))
+        #    cursor.execute(sql)
     
     genReport(yesterday ,cursor)
     cursor.close()
     conn.close()
     
     msg = """
-    The average response time report. 
+    The Report of Link Clicking.
     Date: %s
     Link: <a href='http://zx.360quan.com/stats.html?ofc=9949/%s' target='_blank'>view report</a>
     """ % (yesterday.strftime('%Y-%m-%d'), yesterday.strftime('%Y-%m-%d'))
     f_mail = open('mail.txt', 'w+')
     f_mail.write(msg)
     f_mail.close()
-    #r = os.popen('mail -c fengyue@360quan.com,zhangyuxiang@360quan.com,liusong@360quan.com -s "Average Response Time Report" dan@360quan.com,uzi.refaeli@360quan.com < mail.txt')    
-    r = os.popen('mail -c liusong@360quan.com -s "Average Response Time Report" svn@360quan.com < mail.txt')
+    #r = os.popen('mail -c fengyue@360quan.com,zhangyuxiang@360quan.com,liusong@360quan.com -s "The Report of Link Clicking" dan@360quan.com,uzi.refaeli@360quan.com < mail.txt')    
+    r = os.popen('mail -c liusong@360quan.com -s "The Report of Link Clicking" svn@360quan.com < mail.txt')
