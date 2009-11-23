@@ -155,6 +155,19 @@ def genReport(day, cursor):
             
             if row['totalclick'] > chart['y_axis']['max']:
                 chart['y_axis']['max'] = row['totalclick'] + 1000
+        chart['elements'].append(lines[period])
+
+    sql = "SELECT dest, COUNT(id) AS cnt FROM log WHERE date_c BETWEEN '%s 00:00:00' AND '%s 00:00:00' GROUP BY dest ORDER BY cnt DESC;" % (day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
+    logger.info('[grid sql]%s' % sql)
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+
+    #sql = "SELECT dest, DATE_FORMAT(date_c, '%Y-%m-%d') AS period, COUNT(id) AS cnt FROM log WHERE date_c >= SUBDATE(NOW(), INTERVAL 7 DAY) GROUP BY period;"
+    for row in rows:
+        r = {}
+        r['dest'] = row['dest']
+        r['count'] = row['cnt']
+        chart['rows'].append(r)                
 #        for row in rows:
 #            r = {}
 #            r['city'] = row['city']
@@ -179,7 +192,6 @@ def genReport(day, cursor):
 #            if lt > chart['y_axis']['max']:
 #                chart['y_axis']['max'] = lt + 10000
         
-    chart['elements'].append(lines[period])
         
     f_report.write(json.dumps(chart))
     f_report.close()
