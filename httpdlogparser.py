@@ -84,7 +84,7 @@ def genReport(day, cursor):
     chart = {}
     
     chart['title']={}
-    chart['title']['text']='User Clicks.'
+    chart['title']['text']='Report of Link Clicking.'
     chart['title']['style']='{font-size:20px; color:#0000ff; font-family: Verdana; text-align: center;}'
     
     chart['x_legend']={}
@@ -115,8 +115,8 @@ def genReport(day, cursor):
     lines = {}
     chart['rows'] = []
     for period,format in periods.items():
-        sql = "SELECT name, dest, date_c, DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log GROUP BY period DESC;" % format
-        logger.info(sql)
+        sql = "SELECT DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log WHERE date_c >= DATE_SUB(CURDATE(), INTERVAL 7 %s) GROUP BY period DESC;" % (format, period)
+        logger.info('[counting log]%s' % sql)
         cursor.execute(sql)
         
         rows = cursor.fetchall()
@@ -143,6 +143,7 @@ def genReport(day, cursor):
         chart['elements'].append(lines[period])
 
     sql = "SELECT name, dest, COUNT(id) AS cnt FROM log WHERE date_c BETWEEN '%s 00:00:00' AND '%s 00:00:00' GROUP BY dest ORDER BY cnt DESC;" % (day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
+    #sql = "SELECT name, dest, COUNT(id) AS cnt FROM log WHERE DATE_SUB(CURDATE(), INTERVAL 1 DAY) GROUP BY dest ORDER BY cnt DESC;"
     logger.info('[grid sql]%s' % sql)
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -161,7 +162,7 @@ if __name__ == '__main__':
     import sys
     import logging
     
-    logger = logging.getLogger('stats')
+    logger = logging.getLogger('9949')
     logger.setLevel(logging.DEBUG)
     hdlr = logging.FileHandler(os.path.join(os.path.dirname(__file__), '%s.log' %os.path.basename(__file__)))
     hdlr.setLevel(logging.DEBUG)
