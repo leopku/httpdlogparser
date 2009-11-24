@@ -47,7 +47,7 @@ class HttpdLogParser:
             client = Client()
             info = line.split('"')
 
-            pattern = re.compile(r'POST /go.html\?name=(?P<name>.*?)&u=(?P<dest>http://.*?) HTTP')
+            pattern = re.compile(r'POST /go\.html\?name=(?P<name>.*?)&u=(?P<dest>http://.*?) HTTP')
             m = pattern.search(info[1])
             client.ref = info[3]
             if m:
