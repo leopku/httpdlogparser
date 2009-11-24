@@ -212,4 +212,4 @@ if __name__ == '__main__':
     f_mail = open('mail.txt', 'w+')
     f_mail.write(msg)
     f_mail.close()
-    r = os.popen('mail -c fengyue@360quan.com,zhangyuxiang@360quan.com,liusong@360quan.com -s "The Report of Link Clicking" dan@360quan.com,uzi.refaeli@360quan.com < mail.txt')    
+    r = os.popen('mail -c fengyue@360quan.com,zhangyuxiang@360quan.com,liujiejiao@360quan.com,liusong@360quan.com -s "The Report of Link Clicking" dan@360quan.com,uzi.refaeli@360quan.com < mail.txt')    
