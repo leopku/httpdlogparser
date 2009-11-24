@@ -53,10 +53,11 @@ class HttpdLogParser:
             if m:
                 client.dest = m.group('dest')
                 name = m.group('name')
-                if name == 'undefined'
+                if name == 'undefined': # MISTAKE
                     name = None
                 else:
-                    name = unquote(name.decode('GB2312').encode('UTF-8'))
+                    name = unquote(name.decode('GB2312'))
+                    logger.info('[charset]%s' % type(m.group('name').decode('GB2312'))) # MISTAKE
                 client.name = name
 
                 client.agent = info[-2]
