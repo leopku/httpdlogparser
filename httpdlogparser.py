@@ -47,16 +47,10 @@ class HttpdLogParser:
             client = Client()
             info = line.split('"')
 
-            #pattern = re.compile(r't=(?P<time>\d+)&r=(?P<ref>http://(?P<domain>\S+?).360quan.com\S+)')
             pattern = re.compile(r'POST /go.html\?name=(?P<name>.*?)&u=(?P<dest>http://.*?) HTTP')
             m = pattern.search(info[1])
-            # client.loadtime = None
             client.ref = info[3]
-            #client.domain = None
             if m:
-                # client.loadtime = int(m.group('time'))
-                #client.ref = m.group('ref')
-                #client.domain = m.group('domain')
                 client.dest = m.group('dest')
                 name = m.group('name')
                 if name == 'undefined'
@@ -64,7 +58,6 @@ class HttpdLogParser:
                 else:
                     name = unquote(name.decode('GB2312').encode('UTF-8'))
                 client.name = name
-                #client.dest = m.group('dest')
 
                 client.agent = info[-2]
                 ip_datetime = info[0].split(' ')
@@ -83,27 +76,10 @@ class HttpdLogParser:
 
                 self.clients.append(client)
             
-#            client.agent = info[-2]
-#            ip_datetime = info[0].split(' ')
-#            client.ip = ip_datetime[0]
-#            
-#            i = pyip.IPInfo(IPFILE)
-#            city, isp = i.getIPAddr(client.ip)
-#            client.city = city.decode('utf8')
-#            client.isp = isp.decode('utf8')
-#            
-#            dt = ip_datetime[3]
-#            dt = dt[-(len(dt)-1):]
-#            
-#            t = time.strptime(dt, '%d/%b/%Y:%H:%M:%S')
-#            client.datetime = datetime.datetime(*t[:6])
-            
         return self.clients
 
 def genReport(day, cursor):
-    #dir = '/Data/webapps/zx/data'
     report = os.path.join(os.path.dirname(__file__), '9949', day.strftime('%Y-%m-%d'))
-    #report = '%s/%s' % (dir, day.strftime('%Y-%m-%d'))
     f_report  = open(report, 'w+')
     chart = {}
     
@@ -134,14 +110,11 @@ def genReport(day, cursor):
     d = datetime.timedelta(days=1)
     nextday = day + d
 
-    #domains = ['www', 'my', 'www1']
     periods = {'Day':'%Y-%m-%d', 'Week':'%u', 'Month':'%Y-%m'}
     colors = {'Day': '#ffae00', 'Week':'#52aa4b', 'Month': '#ff0000'}
     lines = {}
     chart['rows'] = []
     for period,format in periods.items():
-        #sql = 'SELECT ip, city, isp, date_c, loadtime, domain, agent FROM log WHERE domain="%s" AND date_c>="%s 00:00:00" AND date_c<"%s 00:00:00"' % (domain, day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
-        #sql = 'SELECT dest, count(*) AS cnt FROM log WHERE domain="%s" AND date_c BETWEEN "%s 00:00:00" AND "%s 00:00:00"' % (domain, day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
         sql = "SELECT name, dest, date_c, DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log GROUP BY period DESC;" % format
         logger.info(sql)
         cursor.execute(sql)
@@ -161,7 +134,7 @@ def genReport(day, cursor):
         rows_list = list(rows)
         for row in rows:
             index = rows_list.index(row)
-            #lines[period]['values'][-1-index] = row['cnt']
+            lines[period]['values'][-1-index] = {}
             lines[period]['values'][-1-index]['value'] = row['cnt']
             lines[period]['values'][-1-index]['tip'] = '%s:%s<br>#val#' % (period, row['period'])
             
@@ -174,38 +147,13 @@ def genReport(day, cursor):
     cursor.execute(sql)
     rows = cursor.fetchall()
 
-    #sql = "SELECT dest, DATE_FORMAT(date_c, '%Y-%m-%d') AS period, COUNT(id) AS cnt FROM log WHERE date_c >= SUBDATE(NOW(), INTERVAL 7 DAY) GROUP BY period;"
     for row in rows:
         r = {}
         r['name'] = row['name']
         r['dest'] = row['dest']
         r['count'] = row['cnt']
         chart['rows'].append(r)                
-#        for row in rows:
-#            r = {}
-#            r['city'] = row['city']
-#            r['isp'] = row['isp']
-#            r['datetime'] = row['date_c'].strftime('%m/%d/%Y %H:%M:%S')
-#            r['dest'] = row['dest']
-#            r['ref'] = row['ref']
-#            chart['rows'].append(r) 
-#            
-#            hour = row['date_c'].hour
-#            
-#            #lt = AvgTime.get(hour, 0)
-#            #lt = lines[domain]['values'].get(hour, 0)
-#            lt = lines[period]['values'][hour]
-#            if lt:
-#                lt = (lt + row['loadtime'])/2
-#            else:
-#                lt = row['loadtime']
-#            #AvgTime[hour] = lt
-#            lines[period]['values'][hour] = lt
-#            
-#            if lt > chart['y_axis']['max']:
-#                chart['y_axis']['max'] = lt + 10000
-        
-        
+       
     f_report.write(json.dumps(chart))
     f_report.close()
 
@@ -226,8 +174,6 @@ if __name__ == '__main__':
     tomorrow = datetime.date.today() + delta_one_day
 
     try:
-        #conn = MySQLdb.connect(host='192.168.5.55',
-        #                       port=23303,
         conn = MySQLdb.connect(host='10.10.208.59',
                                user='httpdlog',
                                passwd='httpdlog',
@@ -250,12 +196,8 @@ if __name__ == '__main__':
         for client in clients:
             counts[client.dest] = counts.get(client.dest, 0) + 1
             date = client.datetime 
-            #sql = "INSERT INTO log (ip, city, isp, date_c, loadtime, domain, ref) VALUES ('%s', '%s', '%s', '%s', %d, '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.loadtime, client.domain, client.ref)
             sql = "INSERT INTO log (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.dest, client.ref, client.agent, client.name)
-        #    cursor.execute(sql)
-        #for k,v in counts.items():
-        #    sql= "INSERT INTO daycount (dest, cnt, date_c) VALUES ('%s', %d, '%s');" % (k, v, date.strftime('%Y-%m-%d %H:00:00'))
-        #    cursor.execute(sql)
+            cursor.execute(sql)
     
     genReport(yesterday ,cursor)
     cursor.close()
@@ -269,5 +211,4 @@ if __name__ == '__main__':
     f_mail = open('mail.txt', 'w+')
     f_mail.write(msg)
     f_mail.close()
-    #r = os.popen('mail -c fengyue@360quan.com,zhangyuxiang@360quan.com,liusong@360quan.com -s "The Report of Link Clicking" dan@360quan.com,uzi.refaeli@360quan.com < mail.txt')    
-    r = os.popen('mail -c liusong@360quan.com -s "The Report of Link Clicking" svn@360quan.com < mail.txt')
+    r = os.popen('mail -c fengyue@360quan.com,zhangyuxiang@360quan.com,liusong@360quan.com -s "The Report of Link Clicking" dan@360quan.com,uzi.refaeli@360quan.com < mail.txt')    
