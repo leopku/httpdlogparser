@@ -115,7 +115,7 @@ def genReport(day, cursor):
     lines = {}
     chart['rows'] = []
     for period,format in periods.items():
-        sql = "SELECT DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log WHERE date_c >= DATE_SUB(CURDATE(), INTERVAL 7 %s) GROUP BY period DESC;" % (format, period)
+        sql = "SELECT DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log_test WHERE date_c >= DATE_SUB(CURDATE(), INTERVAL 7 %s) GROUP BY period DESC;" % (format, period)
         logger.info('[counting log]%s' % sql)
         cursor.execute(sql)
         
@@ -142,7 +142,7 @@ def genReport(day, cursor):
                 chart['y_axis']['max'] = row['cnt'] + 1000
         chart['elements'].append(lines[period])
 
-    sql = "SELECT name, dest, COUNT(id) AS cnt FROM log WHERE date_c BETWEEN '%s 00:00:00' AND '%s 00:00:00' GROUP BY dest ORDER BY cnt DESC;" % (day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
+    sql = "SELECT name, dest, COUNT(id) AS cnt FROM log_test WHERE date_c BETWEEN '%s 00:00:00' AND '%s 00:00:00' GROUP BY dest ORDER BY cnt DESC;" % (day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
     #sql = "SELECT name, dest, COUNT(id) AS cnt FROM log WHERE DATE_SUB(CURDATE(), INTERVAL 1 DAY) GROUP BY dest ORDER BY cnt DESC;"
     logger.info('[grid sql]%s' % sql)
     cursor.execute(sql)
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     
     logger = logging.getLogger('9949')
     logger.setLevel(logging.DEBUG)
-    hdlr = logging.FileHandler(os.path.join(os.path.dirname(__file__), '%s.log' %os.path.basename(__file__)))
+    hdlr = logging.FileHandler(os.path.join(os.path.dirname(__file__), '%s.test.log' %os.path.basename(__file__)))
     hdlr.setLevel(logging.DEBUG)
     fmt = logging.Formatter('%(asctime)s | %(lineno)s | %(message)s')
     hdlr.setFormatter(fmt)
@@ -185,7 +185,7 @@ if __name__ == '__main__':
         print 'Connecting MySQL error!'
         sys.exit(1)
         
-    logs = glob.glob('/Data/log/9949/9949.cn-access_log.%s??' % yesterday.strftime('%Y%m%d'))
+    logs = glob.glob('/Data/log/9949/9949.cn-access_log.%s??' % datetime.date.today().strftime('%Y%m%d'))
     
     for log in logs:
         logger.info('[log file]%s' % log)
@@ -197,7 +197,7 @@ if __name__ == '__main__':
         for client in clients:
             counts[client.dest] = counts.get(client.dest, 0) + 1
             date = client.datetime 
-            sql = "INSERT INTO log (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.dest, client.ref, client.agent, client.name)
+            sql = "INSERT INTO log_test (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.dest, client.ref, client.agent, client.name)
             cursor.execute(sql)
     
     genReport(yesterday ,cursor)
@@ -212,4 +212,4 @@ if __name__ == '__main__':
     f_mail = open('mail.txt', 'w+')
     f_mail.write(msg)
     f_mail.close()
-    r = os.popen('mail -c fengyue@360quan.com,zhangyuxiang@360quan.com,liujiejiao@360quan.com,liusong@360quan.com -s "The Report of Link Clicking" dan@360quan.com,uzi.refaeli@360quan.com < mail.txt')    
+    r = os.popen('mail -c liusong@360quan.com -s "The Report of Link Clicking" svn@360quan.com < mail.txt')    
