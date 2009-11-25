@@ -42,6 +42,8 @@ class HttpdLogParser:
             info = line.split('"')
                 
     def parseLog(self):
+        #f = open(self.logfile, 'r')
+        import codecs
         f = open(self.logfile, 'r')
         for line in f.xreadlines():
             client = Client()
@@ -56,8 +58,8 @@ class HttpdLogParser:
                 if name == 'undefined': # MISTAKE
                     name = None
                 else:
-                    name = unquote(name.decode('GB2312'))
-                    logger.info('[charset]%s' % type(m.group('name').decode('GB2312'))) # MISTAKE
+                    name = unquote(name).decode('string_escape').decode('GBK')
+                    logger.info('[name]%s' % name.encode('utf-8'))
                 client.name = name
 
                 client.agent = info[-2]
