@@ -12,9 +12,9 @@ function createGrid(){
 	            url: ofc,
 	            fields: ['name', 'count', 'dest'],
 	            columns: [[
-	                {title: 'Name', field: 'name'},
+	                {title: 'Name', field: 'name', width: 150},
 	                {title: 'Click Count', field: 'count'},
-	                {title: 'Destination', field: 'dest'}
+	                {title: 'Destination', field: 'dest', width: 600}
 	            ]],
 	            sortName: 'count',
 	            pagination: false
