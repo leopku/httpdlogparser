@@ -156,6 +156,7 @@ def genReport(day, cursor):
     for row in rows:
         r = {}
         logger.info('[name from db]%s' % row['name'])
+        logger.info('[name type]%s' % type(row['name']))
         r['name'] = row['name']
         r['dest'] = row['dest']
         r['count'] = row['cnt']
