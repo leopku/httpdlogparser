@@ -42,8 +42,6 @@ class HttpdLogParser:
             info = line.split('"')
                 
     def parseLog(self):
-        #f = open(self.logfile, 'r')
-        import codecs
         f = open(self.logfile, 'r')
         for line in f.xreadlines():
             client = Client()
@@ -56,7 +54,7 @@ class HttpdLogParser:
                 logger.info(info[1])
                 client.dest = m.group('dest')
                 name = m.group('name')
-                if name == 'undefined': # MISTAKE
+                if name == 'undefined':
                     name = None
                 else:
                     try:
@@ -157,6 +155,7 @@ def genReport(day, cursor):
 
     for row in rows:
         r = {}
+        logger.info('[name from db]%s' % row['name'])
         r['name'] = row['name']
         r['dest'] = row['dest']
         r['count'] = row['cnt']
