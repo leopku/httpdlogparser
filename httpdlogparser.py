@@ -42,6 +42,8 @@ class HttpdLogParser:
             info = line.split('"')
                 
     def parseLog(self):
+
+
         f = open(self.logfile, 'r')
         for line in f.xreadlines():
             client = Client()
@@ -51,13 +53,17 @@ class HttpdLogParser:
             m = pattern.search(info[1])
             client.ref = info[3]
             if m:
+                logger.info(info[1])
                 client.dest = m.group('dest')
                 name = m.group('name')
                 if name == 'undefined':
                     name = None
                 else:
-                    name = unquote(name).decode('string_escape').decode('GBK'))
-                    logger.info('[name]%s' % name.encode('utf8'))
+                    try:
+                        name = unquote(name).decode('string_escape').decode('GBK')
+                        logger.info('[name]%s' % name.encode('utf-8'))
+                    except:
+                        name = None
                 client.name = name
 
                 client.agent = info[-2]
@@ -117,6 +123,7 @@ def genReport(day, cursor):
     chart['rows'] = []
     for period,format in periods.items():
         sql = "SELECT DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log WHERE date_c >= DATE_SUB(CURDATE(), INTERVAL 7 %s) GROUP BY period DESC;" % (format, period)
+
         logger.info('[counting log]%s' % sql)
         cursor.execute(sql)
         
@@ -144,6 +151,7 @@ def genReport(day, cursor):
         chart['elements'].append(lines[period])
 
     sql = "SELECT name, dest, COUNT(id) AS cnt FROM log WHERE date_c BETWEEN '%s 00:00:00' AND '%s 00:00:00' GROUP BY dest ORDER BY cnt DESC;" % (day.strftime('%Y-%m-%d'), nextday.strftime('%Y-%m-%d'))
+
     #sql = "SELECT name, dest, COUNT(id) AS cnt FROM log WHERE DATE_SUB(CURDATE(), INTERVAL 1 DAY) GROUP BY dest ORDER BY cnt DESC;"
     logger.info('[grid sql]%s' % sql)
     cursor.execute(sql)
@@ -166,6 +174,7 @@ if __name__ == '__main__':
     logger = logging.getLogger('9949')
     logger.setLevel(logging.DEBUG)
     hdlr = logging.FileHandler(os.path.join(os.path.dirname(__file__), '%s.log' %os.path.basename(__file__)))
+
     hdlr.setLevel(logging.DEBUG)
     fmt = logging.Formatter('%(asctime)s | %(lineno)s | %(message)s')
     hdlr.setFormatter(fmt)
@@ -187,6 +196,7 @@ if __name__ == '__main__':
         sys.exit(1)
         
     logs = glob.glob('/Data/log/9949/9949.cn-access_log.%s??' % yesterday.strftime('%Y%m%d'))
+
     
     for log in logs:
         logger.info('[log file]%s' % log)
@@ -199,6 +209,7 @@ if __name__ == '__main__':
             counts[client.dest] = counts.get(client.dest, 0) + 1
             date = client.datetime 
             sql = "INSERT INTO log (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.dest, client.ref, client.agent, client.name)
+
             cursor.execute(sql)
     
     genReport(yesterday ,cursor)
@@ -214,3 +225,4 @@ if __name__ == '__main__':
     f_mail.write(msg)
     f_mail.close()
     r = os.popen('mail -c fengyue@360quan.com,zhangyuxiang@360quan.com,liujiejiao@360quan.com,liusong@360quan.com -s "The Report of Link Clicking" dan@360quan.com,uzi.refaeli@360quan.com < mail.txt')    
+
