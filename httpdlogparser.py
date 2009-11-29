@@ -95,7 +95,7 @@ def genReport(day, cursor):
     chart['y_axis']['stroke'] = 1
     chart['y_axis']['visible'] = True
     chart['y_axis']['offset'] = False
-    chart['y_axis']['max'] =  5000
+    chart['y_axis']['max'] =  50
     
     chart['elements']=[]
     d = datetime.timedelta(days=1)
