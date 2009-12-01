@@ -119,11 +119,10 @@ def genReport(day, cursor):
         lines[domain]['text'] = domain
         lines[domain]['dot-style'] = {}
         lines[domain]['dot-style']['type'] = 'solid-dot'
-        lines[domain]['values'] = [0 for col in range(24)]
+        lines[domain]['values'] = [0 for _ in range(24)]
        
         chart['total'] = chart.get('total',0) + len(rows)
         
-        #AvgTime = {}
         for row in rows:
             r = {}
             r['domain'] = domain
@@ -136,14 +135,11 @@ def genReport(day, cursor):
             
             hour = row['date_c'].hour
             
-            #lt = AvgTime.get(hour, 0)
-            #lt = lines[domain]['values'].get(hour, 0)
             lt = lines[domain]['values'][hour]
             if lt:
                 lt = (lt + row['loadtime'])/2
             else:
                 lt = row['loadtime']
-            #AvgTime[hour] = lt
             lines[domain]['values'][hour] = lt
             
             if lt > chart['y_axis']['max']:
@@ -162,7 +158,7 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
     hdlr = logging.FileHandler(os.path.join(os.path.dirname(__file__), '%s.log' %os.path.basename(__file__)))
     hdlr.setLevel(logging.DEBUG)
-    fmt = logging.Formatter('%(asctime)s | %(lineno)s |%(message)s')
+    fmt = logging.Formatter('%(asctime)s | %(lineno)s | %(message)s')
     hdlr.setFormatter(fmt)
     logger.addHandler(hdlr)
     
@@ -189,8 +185,8 @@ if __name__ == '__main__':
         hlp =  HttpdLogParser(log)
         clients = hlp.parseLog()
         for client in clients: 
-            sql = "INSERT INTO log (ip, city, isp, date_c, loadtime, domain, ref) VALUES ('%s', '%s', '%s', '%s', %d, '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.loadtime, client.domain, client.ref)
-        cursor.execute(sql)
+            sql = "INSERT INTO log (ip, city, isp, date_c, loadtime, domain, ref, agent) VALUES ('%s', '%s', '%s', '%s', %d, '%s', '%s', '%s');" % (client.ip, client.city, client.isp, client.datetime.strftime('%Y-%m-%d %H:00:00'), client.loadtime, client.domain, client.ref, client.agent)
+            cursor.execute(sql)
         
     genReport(yesterday ,cursor)
     cursor.close()
@@ -198,11 +194,11 @@ if __name__ == '__main__':
     
     msg = """
     The average response time report. 
-    Date: %s
-    Link: <a href='http://zx.360quan.com/stats.html?ofc=data/%s' target='_blank'>view report</a>
+    Date: \t%s
+    Link: \t<a href='http://zx.360quan.com/stats.html?ofc=data/%s' target='_blank'>view report</a>
     """ % (yesterday.strftime('%Y-%m-%d'), yesterday.strftime('%Y-%m-%d'))
     f_mail = open('mail.txt', 'w+')
     f_mail.write(msg)
     f_mail.close()
-    #r = os.popen('mail -c fengyue@360quan.com,zhangyuxiang@360quan.com,liusong@360quan.com -s "Average Response Time Report" dan@360quan.com,uzi.refaeli@360quan.com < mail.txt')    
-    r = os.popen('mail -c liusong@360quan.com -s "Average Response Time Report" svn@360quan.com < mail.txt')
+    # r = os.popen('mail -c liusong@360quan.com -s "Average Response Time Report" svn@360quan.com < mail.txt')
+    r = os.popen('mail -c fengyue@360quan.com,zhangyuxiang@360quan.com,liusong@360quan.com -s "Average Response Time Report" dan@360quan.com,uzi.refaeli@360quan.com < mail.txt')    
