@@ -90,6 +90,7 @@ def genReport(day, cursor):
     f_report  = open(report, 'w+')
     chart = {}
     
+    chart['bg_colour']='#FFFFFF'
     chart['title']={}
     chart['title']['text']='Report of Link Clicking.'
     chart['title']['style']='{font-size:20px; color:#0000ff; font-family: Verdana; text-align: center;}'
@@ -102,12 +103,14 @@ def genReport(day, cursor):
     chart['y_legend']['style']='{color:#736AFF; font-size: 12px;}'
     
     chart['x_axis'] = {}
+    chart['x_axis']['grid-colour'] = '#DDDDDD'
     chart['x_axis']['stroke'] = 1
     chart['x_axis']['labels'] = {}
     chart['x_axis']['labels']['rotate'] = 0
     chart['x_axis']['labels']['labels'] = ["7","6", "5", "4", "3", "2", "1"]
     
     chart['y_axis'] = {}
+    chart['y_axis']['grid-colour'] = '#DDDDDD'
     chart['y_axis']['stroke'] = 1
     chart['y_axis']['visible'] = True
     chart['y_axis']['offset'] = False
