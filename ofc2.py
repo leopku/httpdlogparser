@@ -1,153 +1,163 @@
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 of the License.
-# 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# Author: Emanuel Fonseca
-# Email:  emdfonseca<at>gmail<dot>com
-# Date:   25 August 2008
+#!/usr/bin/env python
+# encoding: utf-8
+"""
+ofc2.py
+
+Created by Pradeep Gowda on 2009-01-01.
+Copyright (c) 2009 Pradeep Gowda.
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+"""
 
 import cjson
 
-class Title(dict):
-    def __init__(self, title, style=None):
-        self['text'] = title
-        self.set_style(style)
+class OFCBase(dict):
+    type = None
+    replace = {
+        'font_size':'font-size', 'fontsize': 'font-size',
+        'color':'colour', 'bg_color':'bg_colour', 'bgcolor':'bg_colour',
+        'dot_size': 'dot-size', 'dotsize':'dot-size', 'grid_colour': 'grid-colour',
+        'dot_style': 'dot-style',
+        'grid_color': 'grid-colour', 'tick_height': 'tick-height',
+        'on_click':'on-click', 'outline_color':'outline-colour',
+        'outline_colour':'outline-colour', 'fill_color':'fill',
+        'fill_colour':'fill', 'fill_alpha':'fill-alpha',
+        'halo_size':'halo-size', 'halosize':'halo-size',
+        'proximity': 'mouse', 'spoke_labels':'spoke-labels'
+    }
 
-    def set_style(self, style):
-        if style:
-            self['style'] = style
+    def __setattr__(self, k, w):
+        if k in self.acceptable:
+            if k in self.replace.keys():
+                k = self.replace[k]
+            self[k] = w
+            self.__dict__.update({k:w})
 
-class y_legend(Title):
-    pass
 
-class x_legend(Title):
-    pass
+def ofc_init(self, **kw):
+    for k,w in kw.items():
+        if k in self.acceptable:
+            if k in self.replace.keys():
+                k = self.replace[k]
+            self[k] = w
+            self.__dict__.update({k:w})
 
-##########################################
-# axis classes
-class axis(dict):
-    def __init__(self, stroke=None, tick_height=None, colour=None, grid_colour=None, steps=None):
-        self.set_stroke(stroke)
-        self.set_tick_height(tick_height)
-        self.set_colour(colour)
-        self.set_grid_colour(grid_colour)
-        self.set_steps(steps)
 
-    def set_stroke(self, stroke):
-        if stroke:
-            self['stroke'] = stroke
+def ofc_factory(classname, acceptable):
+       klass = type(classname, (OFCBase, ), {'acceptable':acceptable})
+       setattr(klass, '__init__', ofc_init )
+       return klass
 
-    def set_tick_height(self, tick_height):
-        if tick_height:
-            self['tick_height'] = tick_height
+title = ofc_factory('title', ['text','style'])
+class x_legend(title): pass
+class y_legend(title): pass
 
-    def set_colour(self, colour):
-        if colour:
-            self['colour'] = colour
-    
-    def set_grid_colour(self, grid_colour):
-        if grid_colour:
-            self['grid_colour'] = grid_colour
+labels = ofc_factory('labels', ['labels', 'text'])
+x_axis_label = ofc_factory('x_axis_label', ['text', 'steps', 'color', 'colour', 'size', 'visible', 'rotate' ])
+x_axis_labels = ofc_factory('x_axis_labels', ['labels', 'rotate', 'steps'])
+radar_axis_labels = ofc_factory('radar_axis_labels', ['labels'])
+radar_spoke_labels = ofc_factory('radar_spoke_labels',['labels'])
+shapefactory = ofc_factory('_shape', ['type','colour', 'color', 'values'])
+shape = lambda **kw: shapefactory(type='shape', **kw)
+shape_value = ofc_factory('shape_value', ['x', 'y'])
 
-    def set_steps(self, steps):
-        if steps:
-            self['steps'] = steps
-    
-class x_axis(axis):
-    def __init__(self, stroke=None, tick_height=None, colour=None, grid_colour=None, labels=None, steps=None):
-        axis.__init__(self, stroke, tick_height, colour, grid_colour, steps)
-        self.set_labels(labels)
-        self['orientation'] = 2
+axis =  ofc_factory('axis', ['stroke', 'tick_height', 'colour',
+    'grid_colour', 'steps', 'min', 'max', 'labels', 'offset', 'radar',
+    'spoke_labels'
+    ])
+class x_axis(axis): pass
+class y_axis(axis): pass
+class y_axis_right(axis): pass
+class radar_axis(axis): pass
 
-    def set_labels(self, labels):
-        if labels:
-            self['labels'] = labels
+tooltip = ofc_factory('tooltip', ['shadow', 'stroke', 'colour', 'bg_colour', 'title_style', 'body_style', 'proximity'])
 
-class y_axis(axis):
-    def __init__(self, stroke=None, tick_height=None, colour=None, grid_colour=None, offset=None, max=None, min=None, steps=None):
-        axis.__init__(self, stroke, tick_height, colour, grid_colour, steps)
-        self.set_offset(offset)
-        self.set_max(max)
-        self.set_min(min)
+element = ofc_factory('element', ['type','alpha', 'colour', 'color', 'text', 'fontsize', 'values'])
 
-    def set_offset(self, offset):
-        if offset:
-            self['offset'] = offset
-    
-    def set_max(self, max):
-        if max:
-            self['max'] = max
+entry = ofc_factory('values', ['text', 'fontsize', 'colour', 'color'])
 
-    def set_min(self, min):
-        if min:
-            self['min'] = min
+linefactory = ofc_factory('_line', ['type','alpha', 'colour','color', 'text',
+    'fontsize', 'font_size', 'values', 'halo_size', 'width', 'dot_size', 'on_click', 'tip',
+    'loop', 'dot_style'])
+line = lambda **kw: linefactory(type='line',**kw)
+line_dot = lambda **kw: linefactory(type='line_dot', **kw)
+line_hollow = lambda **kw: linefactory(type='line_hollow', **kw)
 
-##########################################
-# open_flash_chart class
-class tooltip(dict):
-    def __init__(self, shadow=None, stroke=None, colour=None, bg_colour=None, title_style=None, body_style=None):
-        self.set_shadow(shadow)
-        self.set_stroke(stroke)
-        self.set_colour(colour)
-        self.set_background(bg_colour)
-        self.set_title(title_style)
-        self.set_body(body_style)
+key = ofc_factory('key', ['text', 'size', 'colour', 'font-size'])
+dot_value = ofc_factory('value', ['value', 'colour', 'color', 'tip'])
+dotfactory = ofc_factory('_dot-style', ['type', 'dot_style', 'dot_size', 'halo_size', 'colour', 'rotation', 'hollow', 'on_click', 'style'])
+dot = lambda **kw: dotfactory(type='solid-dot', **kw)
+hollowdot = lambda **kw: dotfactory(type='hollow-dot', **kw)
+stardot = lambda **kw: dotfactory(type='star', **kw)
 
-    def set_shadow(self, shadow):
-        if shadow:
-            self['shadow'] = shadow
-    
-    def set_stroke(self, stroke):
-        if stroke:
-            self['stroke'] = stroke
-    
-    def set_colour(self, colour):
-        if colour:
-            self['colour'] = colour
-    
-    def set_background(self, background):
-        if background:
-            self['background'] = background
-    
-    def set_title(self, title):
-        if title:
-            self['title'] = title
-    
-    def set_body(self, body):
-        if body:
-            self['body'] = body
+barfactory = ofc_factory('_bar', ['type', 'values', 'alpha', 'color', 'colour', 'key', 'on_click'])
+bar = lambda **kw: barfactory(type='bar',**kw)
+barvalue = ofc_factory('values', ['colour', 'value', 'tip', 'top', 'bottom'])
 
-##########################################
-# open_flash_chart class
-class open_flash_chart(dict):
-    def __init__(self, title, style=None):
-        self['title'] = Title(title, style)
+barfilledfactory = ofc_factory('_bar', ['type', 'values', 'alpha', 'color',
+    'colour', 'key', 'outline_colour', 'outline_color'])
+bar_filled = lambda **kw: barfilledfactory(type='bar_filled',**kw)
 
-    def set_x_legend(self, legend):
-        self['x_legend'] = x_legend(legend)
+hbarfactory = ofc_factory('_hbar', ['type', 'values', 'color', 'colour', 'tooltip', 'tip'])
+hbar = lambda **kw: hbarfactory(type='hbar', **kw)
+hbar_value = ofc_factory('hbar_factory', ['left', 'right', 'tip'])
 
-    def set_y_legend(self, legend):
-        self['y_legend'] = y_legend(legend)
+barstackfactory = ofc_factory('_barstack', ['type', 'values', 'keys', 'tip', 'color', 'colours', 'on_click'])
+bar_stack = lambda **kw: barstackfactory(type='bar_stack',**kw)
 
-    def set_x_axis(self, stroke=None, tick_height=None, colour=None, grid_colour=None, labels=None, steps=None):
-        self['x_axis'] = x_axis(stroke, tick_height, colour, grid_colour, labels, steps)
-    
-    def set_y_axis(self, stroke=None, tick_height=None, colour=None, grid_colour=None, offset=None, max=None, min=None, steps=None):
-        self['y_axis'] = y_axis(stroke, tick_height, colour, grid_colour, offset, max, min, steps)
-    
-    def set_y_axis_right(self, stroke=None, tick_height=None, colour=None, grid_colour=None, offset=None, max=None, min=None, steps=None):
-        self['y_axis_right'] = y_axis(stroke, tick_height, colour, grid_colour, offset, max, min, steps)
+area_linefactory = ofc_factory('_area_line', ['type', 'values', 'color', 'colour',
+    'tooltip', 'width', 'dot_size', 'dotsize', 'halo_size', 'halosize' 'key', 'fill_colour',
+    'fill_color', 'fill_alpha', 'loop'])
+area_line = lambda **kw: area_linefactory(type='area_line', **kw)
+area_hollow = lambda **kw: area_linefactory(type='area_hollow', **kw)
 
-    def set_bg_colour(self, colour):
-        self['bg_colour'] = colour
+scatter_value = ofc_factory('values', ['x','y'])
+scatterfactory = ofc_factory('_scatter', ['type', 'dot_size', 'color', 'colour', 'values'])
+scatter = lambda **kw: scatterfactory(type='scatter', **kw)
+scatter_line = lambda **kw: scatterfactory(type='scatter_line', **kw)
 
-    def set_tooltip(self,  shadow=None, stroke=None, colour=None, bg_colour=None, title_style=None, body_style=None):
-        self['tooltip'] = tooltip(shadow, stroke, colour, bg_colour, title_style, body_style)
+pie_value = ofc_factory('values', ['label', 'label-color', 'font-size', 'tooltip', 'color', 'colour', 'value', 'tip', 'on_click'])
+piefactory = ofc_factory('_pie', ['alpha', 'colour', 'color', 'text',
+        'fontsize', 'values', 'start_angle', 'animate', 'colours', 'label_colour',
+        'on_click', 'radius', 'type'])
+pie = lambda **kw: piefactory(type='pie', **kw)
+
+#TODO: derive open_flash_chart class from OFCBase . use ofc_factory
+class open_flash_chart(OFCBase):
+    typetable = {
+    'title': title,
+    'x_legend':x_legend,
+    'y_legend':y_legend,
+    'x_axis': x_axis,
+    'y_axis': y_axis,
+    'y_axis_right': y_axis_right,
+    'tooltip' : tooltip,
+    'radar_axis': radar_axis,
+    }
+
+    def __setattr__(self, k, w):
+        super(OFCBase, self).__setattr__(k,w)
+        if k in self.typetable.keys():
+            assert(isinstance(w, self.typetable[k]))
+        self[k] = w
 
     def add_element(self, element):
         try:
@@ -155,13 +165,8 @@ class open_flash_chart(dict):
         except:
             self['elements'] = [element]
 
-    def encode(self):
+    def __str__(self):
         return cjson.encode(self)
 
-#ofc = open_flash_chart('Example JSON')
-#ofc.set_y_legend('Example Y Legend')
-#ofc.set_x_legend('Example X Legend')
-#ofc.set_x_axis(1, 1, '#ff0000', '#00ff00', ['sun', 'mon', 'tue'])
-#ofc.set_x_axis(labels=['sun', 'mon', 'tue'])
-
-#print cjson.encode(ofc)
+    def render(self):
+        return cjson.encode(self)
