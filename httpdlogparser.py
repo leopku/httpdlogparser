@@ -42,8 +42,6 @@ class HttpdLogParser:
             info = line.split('"')
                 
     def parseLog(self):
-
-
         f = open(self.logfile, 'r')
         for line in f.xreadlines():
             client = Client()
