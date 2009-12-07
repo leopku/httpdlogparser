@@ -4,6 +4,8 @@ import os
 import re
 import os.path
 import pyip
+import time
+import datetime
 #import simplejson
 
 IPDATA = os.path.join(os.path.dirname(__file__), 'QQWry.Dat')
@@ -25,12 +27,6 @@ class GuestBase:
     
     def set_agent(self, agent):
         self.agent = agent
-        
-    def set_target_url(self, url):
-        self.target_url = url
-    
-    def set_name(self, name):
-        self.name = name
         
     def set_location(self):
         ipinfo = pyip.IPInfo(IPDATA)

@@ -7,12 +7,20 @@ from urllib import unquote
 from apachelogparser import GuestBase, ReportBase, apachelog
 
 class guest9949(GuestBase):
+    """
+    log example:
+    222.35.169.141 - - [07/Dec/2009:18:00:00 +0800] "POST /go.html?name=17173&u=http://www.17173.com/ HTTP/1.1" 200 50 "http://www.9949.cn/?uid=desktop" "Mozilla/4.0 (compatible; MSIE 6.0; IQ 0.9.8.1322; zh_cn; Windows NT 5.1))"
+    """
+    def set_target_url(self, url):
+        self.target_url = url
     
+    def set_name(self, name):
+        self.name = name
+            
     def parseResource(self, regex):
         pattern = re.compile(regex)
         match = pattern.search(self.resource)
         if match:
-            logger.info(self.resource)
             self.set_target_url(match.group('dest'))
             
             name = match.group('name')
@@ -21,7 +29,6 @@ class guest9949(GuestBase):
             else:
                 try:
                     name = unquote(name).decode('string_escape').decode('GBK')
-                    logger.info('[name]%s' % name.encode('utf-8'))
                 except:
                     name = None
             self.set_name(name)
@@ -55,7 +62,8 @@ if __name__ == '__main__':
     for log in logs:
         logger.info('[log file]%s' % log)
         regex = r'POST /go\.html\?name=(?P<name>.*?)&u=(?P<dest>http://.*?) HTTP'
-        guests = apachelog(log, guest9949, regex)
+        parser = apachelog(log, guest9949, regex)
+        g = parser.parseFile()
         
         counts = {}
         date = None
