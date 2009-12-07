@@ -4,6 +4,9 @@ import logging
 import sys
 import re
 from urllib import unquote
+import MySQLdb
+import datetime
+import glob
 from apachelogparser import GuestBase, ReportBase, apachelog
 
 class guest9949(GuestBase):
@@ -29,7 +32,7 @@ class guest9949(GuestBase):
             else:
                 try:
                     name = unquote(name).decode('string_escape').decode('GBK')
-                except:
+                except Exception, err:
                     name = None
             self.set_name(name)
         
@@ -52,18 +55,19 @@ if __name__ == '__main__':
                                charset='utf8')
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
     except MySQLdb.Error, e:
-        logger.critical('MySQL connection error!')
+        logger.critical('MySQL connection error! %s' % e)
         sys.exit(1)
     
     delta_one_day = datetime.timedelta(days=1)
     yesterday = datetime.date.today() - delta_one_day
     tomorrow = datetime.date.today() + delta_one_day
 
+    logs = glob.glob('/Data/log/9949/9949.cn-access_log.%s??' % yesterday.strftime('%Y%m%d'))
+    regex = r'POST /go\.html\?name=(?P<name>.*?)&u=(?P<dest>http://.*?) HTTP'
     for log in logs:
         logger.info('[log file]%s' % log)
-        regex = r'POST /go\.html\?name=(?P<name>.*?)&u=(?P<dest>http://.*?) HTTP'
         parser = apachelog(log, guest9949, regex)
-        g = parser.parseFile()
+        guests = parser.parseFile()
         
         counts = {}
         date = None
@@ -72,4 +76,3 @@ if __name__ == '__main__':
             
             sql = "INSERT INTO log (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (guest.ip, guest.city, guest.isp, guest.datetime.strftime('%Y-%m-%d %H:00:00'), guest.target_url, guest.referer, guest.agent, guest.name)
             cursor.execute(sql)
-   
