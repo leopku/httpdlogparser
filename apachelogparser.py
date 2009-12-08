@@ -9,12 +9,13 @@ import datetime
 #import simplejson
 
 IPDATA = os.path.join(os.path.dirname(__file__), 'QQWry.Dat')
+IPINFO = pyip.IPInfo(IPDATA)
 
 class GuestBase:
     
     def set_ip(self, ip):
         self.ip = ip
-        self.set_location()
+        #self.set_location()
         
     def set_time(self, dt):
         self.datetime = dt
@@ -29,8 +30,8 @@ class GuestBase:
         self.agent = agent
         
     def set_location(self):
-        ipinfo = pyip.IPInfo(IPDATA)
-        city, isp = ipinfo.getIPAddr(self.ip)
+        
+        city, isp = IPINFO.getIPAddr(self.ip)
         self.city = city.decode('utf-8')
         self.isp = isp.decode('utf-8')
         
@@ -47,11 +48,13 @@ class apachelog:
         f = open(self.log_filename, 'r')
         for line in f.xreadlines():
             g = self.getGuestInfo(line)
-            self.guest_list.append(g)
+            if g.parseResource():
+                self.guest_list.append(g)
         f.close()
         return self.guest_list
     
     def getGuestInfo(self, string):
+        
         guest = apply(self.guest_class)
         info = string.split('"')
         # ip and datetime
@@ -68,8 +71,7 @@ class apachelog:
         guest.set_agent(info[-2])
         
         # parse more info.
-        guest.parseResource(self.regex)
-        
+        #guest.parseResource(self.regex)
         return guest
     
 class ReportBase:

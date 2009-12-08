@@ -29,7 +29,9 @@ class guest9949(GuestBase):
     def parseResource(self, regex):
         pattern = re.compile(regex)
         match = pattern.search(self.resource)
+        result = False
         if match:
+            result = True
             self.set_target_url(match.group('dest'))
             
             name = match.group('name')
@@ -42,6 +44,8 @@ class guest9949(GuestBase):
                     logging.critical('Exception while coding name: %s' % err)
                     name = None
             self.set_name(name)
+            self.set_location()
+        return result
         
 if __name__ == '__main__':
     
@@ -79,6 +83,7 @@ if __name__ == '__main__':
         date = None
          
         for guest in guests:
+            
             counts[guest.target_url] = counts.get(guest.target_url, 0) + 1
             
             sql = "INSERT INTO log (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (guest.ip, guest.city, guest.isp, guest.datetime.strftime('%Y-%m-%d %H:00:00'), guest.target_url, guest.referer, guest.agent, guest.name)
@@ -95,7 +100,7 @@ if __name__ == '__main__':
     
     periods = {'Day':'%Y-%m-%d', 'Week':'%u', 'Month':'%Y-%m'}
     colors = {'Day': '#ffae00', 'Week':'#52aa4b', 'Month': '#ff0000'}
-    for period, format in period.items():
+    for period, format in periods.items():
         sql = "SELECT DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log WHERE date_c >= DATE_SUB(CURDATE(), INTERVAL 7 %s) GROUP BY period DESC;" % (format, period)
         logging.info('[counting sql]%s' % sql)
         cursor.execute(sql)
@@ -117,11 +122,11 @@ if __name__ == '__main__':
     cursor.execute(sql)
     rows = cursor.fectchall()
     for row in rows:
-        gr = {}
-        gr['name'] = row['name']
-        gr['dest'] = row['dest']
-        gr['count'] =  row['cnt']
-        chart.add_grid_line(gr)
+        gridline = {}
+        gridline['name'] = row['name']
+        gridline['dest'] = row['dest']
+        gridline['count'] =  row['cnt']
+        chart.add_grid_line(gridline)
         
     reportfile = os.path.join(os.path.dirname(__file__), '9949', day.strftime('%Y-%m-%d'))
     report  = open(reportfile, 'w+')
