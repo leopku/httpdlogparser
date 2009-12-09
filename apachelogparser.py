@@ -38,17 +38,17 @@ class GuestBase:
 class apachelog:
     """ apache log file class """
     
-    def __init__(self, log_filename, guest_class, regex):
+    def __init__(self, log_filename, guest_class):
         self.log_filename = log_filename
         self.guest_class = guest_class
-        self.regex = regex
+        #self.regex = regex
         self.guest_list = []
         
-    def parseFile(self):
+    def parseFile(self, regex):
         f = open(self.log_filename, 'r')
         for line in f.xreadlines():
             g = self.getGuestInfo(line)
-            if g.parseResource():
+            if g.parseResource(regex):
                 self.guest_list.append(g)
         f.close()
         return self.guest_list

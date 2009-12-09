@@ -13,7 +13,7 @@ from config import config_sets_9949
 from extofc import extChart
 from apachelogparser import GuestBase, ReportBase, apachelog
 
-RUN_ENV = 'test'
+RUN_ENV = 'debug'
 
 class guest9949(GuestBase):
     """
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     
     LOG_FILENAME = os.path.join(os.path.dirname(__file__), '%s.log' %os.path.basename(__file__))
     LOG_FORMAT = '%(asctime)s | %(lineno)s | %(message)s'
-    logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG, format=LOG_FORMAT)
+    logging.basicConfig(filename=LOG_FILENAME, level=logging.ERROR, format=LOG_FORMAT)
 
     try:
         conn = MySQLdb.connect(host=config_sets_9949[RUN_ENV]['host'],
@@ -72,41 +72,44 @@ if __name__ == '__main__':
     yesterday = datetime.date.today() - delta_one_day
     tomorrow = datetime.date.today() + delta_one_day
 
-    logfiles = glob.glob('/Data/log/9949/9949.cn-access_log.%s??' % yesterday.strftime('%Y%m%d'))
-    regex = r'POST /go\.html\?name=(?P<name>.*?)&u=(?P<dest>http://.*?) HTTP'
-    for logfile in logfiles:
-        logging.info('[log file]%s' % logfile)
-        parser = apachelog(logfile, guest9949, regex)
-        guests = parser.parseFile() 
-        
-        counts = {}
-        date = None
-         
-        for guest in guests:
-            
-            counts[guest.target_url] = counts.get(guest.target_url, 0) + 1
-            
-            sql = "INSERT INTO log (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (guest.ip, guest.city, guest.isp, guest.datetime.strftime('%Y-%m-%d %H:00:00'), guest.target_url, guest.referer, guest.agent, guest.name)
-            cursor.execute(sql)    
+#    logfiles = glob.glob('/Data/log/9949/9949.cn-access_log.%s??' % yesterday.strftime('%Y%m%d'))
+#    regex = r'POST /go\.html\?name=(?P<name>.*?)&u=(?P<dest>http://.*?) HTTP'
+#    for logfile in logfiles:
+#        logging.info('[log file]%s' % logfile)
+#        parser = apachelog(logfile, guest9949)
+#        guests = parser.parseFile(regex) 
+#        
+#        counts = {}
+#        date = None
+#         
+#        for guest in guests:
+#            
+#            counts[guest.target_url] = counts.get(guest.target_url, 0) + 1
+#            
+#            sql = "INSERT INTO log (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (guest.ip, guest.city, guest.isp, guest.datetime.strftime('%Y-%m-%d %H:00:00'), guest.target_url, guest.referer, guest.agent, guest.name)
+#            cursor.execute(sql)    
 
     chart = extChart()
     chart.title = title(text='Report of Link Clicking')
-    chart.x_legend = x_legend(text='Days/Weeks/Monthes')
-    chart.y_legend = y_legend(text='click counts')
+    chart.bg_colour = '#FFFFFF' 
+    chart.x_legend = x_legend(text='Days/Weeks/Monthes', style='{color: #736AFF;font-size: 12px;}')
+    chart.y_legend = y_legend(text='click counts', style='{color: #736AFF;font-size: 12px;}')
     
     chart.y_axis = y_axis(grid_colour='#DDDDDD')
+    chart.y_axis.stroke = 1
     chart.x_axis = x_axis(grid_colour='#DDDDDD')
-    chart.x_axis.labels = x_axis_labels(labels=[i+1 for i in range(7)])
+    chart.x_axis.stroke = 1
+    chart.x_axis.labels = x_axis_labels(labels=[str(7-i) for i in range(7)])
     
     periods = {'Day':'%Y-%m-%d', 'Week':'%u', 'Month':'%Y-%m'}
-    colors = {'Day': '#ffae00', 'Week':'#52aa4b', 'Month': '#ff0000'}
+    colours = {'Day': '#ffae00', 'Week':'#52aa4b', 'Month': '#ff0000'}
     for period, format in periods.items():
         sql = "SELECT DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log WHERE date_c >= DATE_SUB(CURDATE(), INTERVAL 7 %s) GROUP BY period DESC;" % (format, period)
         logging.info('[counting sql]%s' % sql)
         cursor.execute(sql)
-        rows = cursor.fectchall()
+        rows = cursor.fetchall()
         
-        l = line(text=period, colour=colors[period])
+        l = line(text=period, colour=colours[period])
         l.dot_style = dot()
         
         rows_list = list(rows)
@@ -115,20 +118,23 @@ if __name__ == '__main__':
             index = rows_list.index(row)
             t = '%s:%s<br>#val#' %  (period, row['period'])
             
-            values[-1-index] = dot_style(value=row['cnt'], tip=t)
+            values[-1-index] = dot_value(value=row['cnt'], tip=t)
+            if row['cnt'] >= chart.y_axis.get('max', 0):
+                chart.y_axis.max = row['cnt'] * 1.2
         l.values = values
+        chart.add_element(l)
         
     sql = "SELECT name, dest, COUNT(id) AS cnt FROM log WHERE date_c BETWEEN '%s 00:00:00' AND '%s 00:00:00' GROUP BY dest ORDER BY cnt DESC;" % (yesterday.strftime('%Y-%m-%d'), datetime.date.today().strftime('%Y-%m-%d'))
     cursor.execute(sql)
-    rows = cursor.fectchall()
+    rows = cursor.fetchall()
     for row in rows:
         gridline = {}
         gridline['name'] = row['name']
         gridline['dest'] = row['dest']
-        gridline['count'] =  row['cnt']
+        gridline['count'] = row['cnt']
         chart.add_grid_line(gridline)
         
-    reportfile = os.path.join(os.path.dirname(__file__), '9949', day.strftime('%Y-%m-%d'))
+    reportfile = os.path.join(os.path.dirname(__file__), '9949', yesterday.strftime('%Y-%m-%d'))
     report  = open(reportfile, 'w+')
     report.write(cjson.encode(chart))
     report.close()
