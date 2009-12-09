@@ -39,11 +39,13 @@ class Guest9949(GuestBase):
             else:
                 name = unquote(name)
                 encoding = chardet.detect(name)['encoding']
-                try:
-                    name = name.decode('string_escape').decode(encoding)
-                except UnicodeDecodeError, err:
-                    logging.critical('Exception while coding name: %s' % err)
-                    name = None
+                if encoding:
+                    try:
+                        name = name.decode('string_escape').decode(encoding)
+                    except UnicodeDecodeError, err:
+                        logging.critical('Exception while coding name: %s' % err)
+                        logging.critical(name)
+                        name = None
             self.set_name(name)
             self.set_location()
         return result
