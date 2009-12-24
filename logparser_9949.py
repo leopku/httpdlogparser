@@ -57,7 +57,7 @@ if __name__ == '__main__':
             RUN_ENV = sys.argv[1]
     
     LOG_FILENAME = os.path.join(os.path.dirname(__file__), '%s.log' %os.path.basename(__file__))
-    LOG_FORMAT = '%(asctime)s | %(lineno)s | %(message)s'
+    LOG_FORMAT = '%(asctime)s | %(levelname)s |%(lineno)s | %(message)s'
     logging.basicConfig(filename=LOG_FILENAME, level=config_sets_9949[RUN_ENV]['logging_level'], format=LOG_FORMAT)
 
     try:
@@ -88,9 +88,12 @@ if __name__ == '__main__':
         for guest in guests:
             
             counts[guest.target_url] = counts.get(guest.target_url, 0) + 1
-            
-            sql = "INSERT INTO log (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" % (guest.ip, guest.city, guest.isp, guest.datetime.strftime('%Y-%m-%d %H:00:00'), guest.target_url, guest.referer, guest.agent, guest.name)
-            cursor.execute(sql)    
+            name = guest.name.replace("'", '"')
+            sql = """INSERT INTO log (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');""" % (guest.ip, guest.city, guest.isp, guest.datetime.strftime('%Y-%m-%d %H:00:00'), guest.target_url, guest.referer, guest.agent, name)
+            try:
+                cursor.execute(sql)
+            except:
+                logging.exception(sql)    
 
     chart = extChart()
     chart.title = title(text='Report of Link Clicking')
