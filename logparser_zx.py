@@ -32,7 +32,7 @@ class GuestZX(GuestBase):
         result = False
         if match:
             result = True
-            self.set_loadtime(match.group('time'))
+            self.set_loadtime(int(match.group('time')))
             self.set_referer(match.group('ref'))
             self.set_domain(match.group('domain'))
             self.set_location()
@@ -70,8 +70,8 @@ if __name__ == '__main__':
         guests = parser.parseFile(regex)
         
         for guest in guests:
-            sql = "INSERT INTO log (ip, city, isp, date_c, loadtime, domain, ref, agent) VALUES ('%s', '%s', '%s', '%s', %d, '%s', '%s', '%s');" % \
-                (guest.ip, guest.city, guest.isp, guest.dateteime.strftime('%Y-%m-%d %H:00:00'), guest.loadtime, guest.domain, guest.referer, guest.agent)
+            #logging.info('[guest]%s %s %s %s %s %s %s %s' % (guest.ip, guest.city, guest.isp, guest.datetime.strftime('%Y-%m-%d %H:00:00'), guest.loadtime, guest.domain, guest.referer, guest.agent))
+            sql = "INSERT INTO log (ip, city, isp, date_c, loadtime, domain, ref, agent) VALUES ('%s', '%s', '%s', '%s', %d, '%s', '%s', '%s');" % (guest.ip, guest.city, guest.isp, guest.datetime.strftime('%Y-%m-%d %H:00:00'), guest.loadtime, guest.domain, guest.referer, guest.agent)
 
             try:
                 cursor.execute(sql)
@@ -87,17 +87,14 @@ if __name__ == '__main__':
     chart.y_axis = ofc2.y_axis(grid_colour='#DDDDDD', stroke=1, max=50)
     chart.x_axis = ofc2.x_axis(grid_colour='#DDDDDD', stroke=1)
     
-    per_ten_min_list = ["00:00","01: 00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00","08:00", \
-                    "09:00", "10:00", "11:00", "12:00", "13:00", "14:00","15:00", "16:00", \
-                    "17:00", "18:00", "19:00", "20:00", "21:00","22:00", "23:00"]
+    per_ten_min_list = ["00:00","01: 00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00","08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00","15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00","22:00", "23:00"]
     chart.x_axis.labels = ofc2.x_axis_labels(labels=per_ten_min_list, rotate=45)
     
     domains = ['www', 'my', 'www1']
     COLOURS = {'www': '#ffae00', 'my':'#52aa4b', 'www1': '#ff0000'}
     
     for domain in domains:
-        sql = 'SELECT ip, city, isp, date_c, loadtime, domain, ref FROM log WHERE domain="%s" AND date_c BETWEEN "%s 00:00:00" AND "%s 00:00:00"' % \
-            (domain, yesterday.strftime('%Y-%m-%d'), datetime.date.today.strftime('%Y-%m-%d'))
+        sql = 'SELECT ip, city, isp, date_c, loadtime, domain, ref FROM log WHERE domain="%s" AND date_c BETWEEN "%s 00:00:00" AND "%s 00:00:00"' % (domain, yesterday.strftime('%Y-%m-%d'), datetime.date.today().strftime('%Y-%m-%d'))
         try:
             cursor.execute(sql)
         except:
@@ -126,11 +123,17 @@ if __name__ == '__main__':
                 lt = row['loadtime']
             values[index] = lt
             
-            if lt > chart.y_axis.max:
-                chart.y_axis.max = lt + 10**(len(str(lt))-1)
+            #if lt > chart.y_axis.max:
+            #    logging.info('[lt]%s %s' % (lt, lt + 10**(len(str(lt))-2)))
+            #    logging.info('[date_c]%s' % (row['date_c'].strftime('%Y-%m-%d %H:%M:%S')))
+            #    chart.y_axis.max = lt + 10**(len(str(lt))-2)
             
-            chart_line.values = values
-            chart.add_element(chart_line)
+        chart_line.values = values
+        max_value = max(values)
+        if max_value > chart.y_axis.max:
+            new_max = max_value + 10**(len(str(max_value)) - 2)
+            chart.y_axis.max = new_max
+        chart.add_element(chart_line)
     reportfile = os.path.join(os.path.dirname(__file__), 'data', yesterday.strftime('%Y-%m-%d'))
     report = open(reportfile, 'w+')
     report.write(cjson.encode(chart))
