@@ -52,10 +52,12 @@ class GuestBase:
         self.agent = agent
         
     def set_location(self):
-        
-        city, isp = IPINFO.getIPAddr(self.ip)
-        self.city = city.decode('utf-8')
-        self.isp = isp.decode('utf-8')
+        try:
+            city, isp = IPINFO.getIPAddr(self.ip)
+            self.city = city.decode('utf-8')
+            self.isp = isp.decode('utf-8')
+        except:
+            pass
         
 class apachelog:
     """ apache log file class """

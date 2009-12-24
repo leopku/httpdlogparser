@@ -5,11 +5,12 @@ import logging
 import sys
 import re
 from urllib import unquote
-import MySQLdb
-import datetime
-import chardet
 import glob
+import datetime
+
+import MySQLdb
 import cjson
+
 from ofc2 import *
 from config import config_sets_9949, RUN_ENV
 from extofc import extChart
@@ -157,8 +158,8 @@ if __name__ == '__main__':
     
     mail_content = """
     The Report of Link Clicking.
-    Date: %s
-    Link: http://zx.360quan.com/stats.html?ofc=9949/%s
+    Date: \t%s
+    Link: \thttp://zx.360quan.com/stats.html?ofc=9949/%s
     """ % (yesterday.strftime('%Y-%m-%d'), yesterday.strftime('%Y-%m-%d'))
     mail_file = open('mail.txt', 'w+')
     mail_file.write(mail_content)
