@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import os.path
 import logging
 import sys
@@ -34,18 +35,22 @@ class Guest9949(GuestBase):
             self.set_target_url(match.group('dest'))
             
             name = match.group('name')
-            if name == 'undefined':
+            if name == 'undefined' or name:
                 name = None
             else:
                 name = unquote(name)
-                encoding = chardet.detect(name)['encoding']
-                if encoding:
-                    try:
-                        name = name.decode('string_escape').decode(encoding)
-                    except UnicodeDecodeError, err:
-                        logging.critical('Exception while coding name: %s' % err)
-                        logging.critical(name)
-                        name = None
+                try:
+                    name = name.decode('string_escape').decode('GBK')
+                except UnicodeDecodeError, err:
+                    logging.error('exception while decode' % (name, err))
+                #encoding = chardet.detect(name.decode('string_escape'))['encoding']
+                #if encoding:
+                #    try:
+                #        name = name.decode('string_escape').decode(encoding)
+                #    except UnicodeDecodeError, err:
+                #        logging.critical('Exception while coding name: %s' % err)
+                #        logging.critical(name)
+                #        name = None
             self.set_name(name)
             self.set_location()
         return result
@@ -88,7 +93,9 @@ if __name__ == '__main__':
         for guest in guests:
             
             counts[guest.target_url] = counts.get(guest.target_url, 0) + 1
-            name = guest.name.replace("'", '"')
+            name = guest.name
+            if name:
+                name = guest.name.replace("'", '"')
             sql = """INSERT INTO log (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');""" % (guest.ip, guest.city, guest.isp, guest.datetime.strftime('%Y-%m-%d %H:00:00'), guest.target_url, guest.referer, guest.agent, name)
             try:
                 cursor.execute(sql)
@@ -154,3 +161,4 @@ if __name__ == '__main__':
     mail_file.write(mail_content)
     mail_file.close()
     mail_cmd = 'mail -c %s -s "The Report of Link Clicking" %s < mail.txt' % (config_sets_9949[RUN_ENV]['mail_to'], config_sets_9949[RUN_ENV]['mail_cc'])
+    os.popen(mail_cmd)
