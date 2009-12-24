@@ -93,10 +93,13 @@ if __name__ == '__main__':
         for guest in guests:
             
             counts[guest.target_url] = counts.get(guest.target_url, 0) + 1
+            isp = guest.isp
+            if isp:
+                isp = isp.replace("'", '"')
             name = guest.name
             if name:
-                name = guest.name.replace("'", '"')
-            sql = """INSERT INTO log (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');""" % (guest.ip, guest.city, guest.isp, guest.datetime.strftime('%Y-%m-%d %H:00:00'), guest.target_url, guest.referer, guest.agent, name)
+                name = name.replace("'", '"')
+            sql = """INSERT INTO log (ip, city, isp, date_c, dest, ref, agent, name) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');""" % (guest.ip, guest.city, isp, guest.datetime.strftime('%Y-%m-%d %H:00:00'), guest.target_url, guest.referer, guest.agent, name)
             try:
                 cursor.execute(sql)
             except:
