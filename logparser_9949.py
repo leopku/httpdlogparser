@@ -144,3 +144,13 @@ if __name__ == '__main__':
     report  = open(reportfile, 'w+')
     report.write(cjson.encode(chart))
     report.close()
+    
+    mail_content = """
+    The Report of Link Clicking.
+    Date: %s
+    Link: http://zx.360quan.com/stats.html?ofc=9949/%s
+    """ % (yesterday.strftime('%Y-%m-%d'), yesterday.strftime('%Y-%m-%d'))
+    mail_file = open('mail.txt', 'w+')
+    mail_file.write(mail_content)
+    mail_file.close()
+    mail_cmd = 'mail -c %s -s "The Report of Link Clicking" %s < mail.txt' % (config_sets_9949[RUN_ENV]['mail_to'], config_sets_9949[RUN_ENV]['mail_cc'])
