@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import os
 import os.path
 import logging
@@ -43,7 +44,7 @@ class Guest9949(GuestBase):
                 try:
                     name = name.decode('string_escape').decode('GBK')
                 except UnicodeDecodeError, err:
-                    logging.error('exception while decode' % (name, err))
+                    name = None
                 #encoding = chardet.detect(name.decode('string_escape'))['encoding']
                 #if encoding:
                 #    try:

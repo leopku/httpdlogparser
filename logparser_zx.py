@@ -148,5 +148,5 @@ if __name__ == '__main__':
     mail_file.write(mail_content)
     mail_file.close()
     
-    mail_cmd = 'mail -c %s -s "The Report of Link Clicking" %s < mail.txt' % (config_sets_zx[RUN_ENV]['mail_to'], config_sets_zx[RUN_ENV]['mail_cc'])
+    mail_cmd = 'mail -c %s -s "The Report of Load Time" %s < mail.txt' % (config_sets_zx[RUN_ENV]['mail_to'], config_sets_zx[RUN_ENV]['mail_cc'])
     os.popen(mail_cmd)
