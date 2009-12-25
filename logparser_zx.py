@@ -131,8 +131,7 @@ if __name__ == '__main__':
         chart_line.values = values
         max_value = max(values)
         if max_value > chart.y_axis.max:
-            new_max = max_value + 10**(len(str(max_value)) - 2)
-            chart.y_axis.max = new_max
+            chart.y_axis.max = max_value + 10**(len(str(max_value)) - 2)
         chart.add_element(chart_line)
     reportfile = os.path.join(os.path.dirname(__file__), 'data', yesterday.strftime('%Y-%m-%d'))
     report = open(reportfile, 'w+')

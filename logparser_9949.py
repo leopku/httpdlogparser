@@ -113,10 +113,9 @@ if __name__ == '__main__':
     chart.x_legend = x_legend(text='Days/Weeks/Monthes', style='{color: #736AFF;font-size: 12px;}')
     chart.y_legend = y_legend(text='click counts', style='{color: #736AFF;font-size: 12px;}')
     
-    chart.y_axis = y_axis(grid_colour='#DDDDDD')
-    chart.y_axis.stroke = 1
-    chart.x_axis = x_axis(grid_colour='#DDDDDD')
-    chart.x_axis.stroke = 1
+    chart.y_axis = y_axis(grid_colour='#DDDDDD', stroke=1)
+    chart.y_axis_right = y_axis_right(grid_colour='#D0D0FF', stroke=1)
+    chart.x_axis = x_axis(grid_colour='#DDDDDD', stroke=1)
     chart.x_axis.labels = x_axis_labels(labels=[str(7-i) for i in range(7)])
     
     periods = {'Day':'%Y-%m-%d', 'Week':'%u', 'Month':'%Y-%m'}
@@ -130,6 +129,7 @@ if __name__ == '__main__':
         l = line(text=period, colour=colours[period])
         l.dot_style = dot()
         
+        
         rows_list = list(rows)
         values = [0 for _ in range(7)]
         for row in rows:
@@ -137,9 +137,17 @@ if __name__ == '__main__':
             t = '%s:%s<br>#val#' %  (period, row['period'])
             
             values[-1-index] = dot_value(value=row['cnt'], tip=t)
-            if row['cnt'] >= chart.y_axis.get('max', 0):
-                chart.y_axis.max = row['cnt'] * 1.2
+            #if row['cnt'] >= chart.y_axis.get('max', 0):
+            #    chart.y_axis.max = row['cnt'] * 1.2
         l.values = values
+        max_value = max(values)
+        if max_value > chart.y_axis.max:
+            if period == 'Month':
+                l.axis = 'right'
+                chart.y_axis_right.max = max_value + 10**(len(str(max_value)) - 2)
+            else:
+                chart.y_axis.max = max_value + 10**(len(str(max_value)) - 2)
+            
         chart.add_element(l)
         
     sql = "SELECT name, dest, COUNT(id) AS cnt FROM log WHERE date_c BETWEEN '%s 00:00:00' AND '%s 00:00:00' GROUP BY dest ORDER BY cnt DESC;" % (yesterday.strftime('%Y-%m-%d'), datetime.date.today().strftime('%Y-%m-%d'))
