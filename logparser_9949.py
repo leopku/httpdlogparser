@@ -36,7 +36,7 @@ class Guest9949(GuestBase):
             self.set_target_url(match.group('dest'))
             
             name = match.group('name')
-            if name == 'undefined' or name:
+            if name == 'undefined' or (not name):
                 name = None
             else:
                 name = unquote(name)
