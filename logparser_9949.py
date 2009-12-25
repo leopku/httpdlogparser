@@ -113,8 +113,8 @@ if __name__ == '__main__':
     chart.x_legend = x_legend(text='Days/Weeks/Monthes', style='{color: #736AFF;font-size: 12px;}')
     chart.y_legend = y_legend(text='click counts', style='{color: #736AFF;font-size: 12px;}')
     
-    chart.y_axis = y_axis(grid_colour='#DDDDDD', stroke=1)
-    chart.y_axis_right = y_axis_right(grid_colour='#D0D0FF', stroke=1)
+    chart.y_axis = y_axis(grid_colour='#DDDDDD', stroke=1, max=50)
+    chart.y_axis_right = y_axis_right(grid_colour='#D0D0FF', stroke=1, max=50)
     chart.x_axis = x_axis(grid_colour='#DDDDDD', stroke=1)
     chart.x_axis.labels = x_axis_labels(labels=[str(7-i) for i in range(7)])
     
@@ -140,12 +140,14 @@ if __name__ == '__main__':
             #if row['cnt'] >= chart.y_axis.get('max', 0):
             #    chart.y_axis.max = row['cnt'] * 1.2
         l.values = values
-        max_value = max(values)
-        if max_value > chart.y_axis.max:
-            if period == 'Month':
+        all_values = [ row['cnt'] for row in rows ]
+        max_value = max(all_values)
+        if period == 'Month':
+            if max_value > chart.y_axis_right.max:
                 l.axis = 'right'
                 chart.y_axis_right.max = max_value + 10**(len(str(max_value)) - 2)
-            else:
+        else:
+            if max_value > chart.y_axis.max:
                 chart.y_axis.max = max_value + 10**(len(str(max_value)) - 2)
             
         chart.add_element(l)
