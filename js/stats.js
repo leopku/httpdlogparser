@@ -22,7 +22,7 @@ function createGrid(){
     	}
 	else {
         	$('#tt').datagrid({
-			title: 'Response Time per ISP',
+			title: 'Response Time Details',
 			width: 800,
 			height: 600,
 			striped: true,
