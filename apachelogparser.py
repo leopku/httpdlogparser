@@ -2,13 +2,14 @@
 
 import os
 import os.path
-import pyip
+import pyip_mem
 import time
 import datetime
 #import simplejson
 
-IPDATA = os.path.join(os.path.dirname(__file__), 'QQWry.Dat')
-IPINFO = pyip.IPInfo(IPDATA)
+#IPDATA = os.path.join(os.path.dirname(__file__), 'QQWry.Dat')
+#IPINFO = pyip.IPInfo(IPDATA)
+IPINFO = pyip_mem.IPInfo_mem('QQWry')
 
 class GuestBase:
     """
@@ -52,10 +53,16 @@ class GuestBase:
         self.agent = agent
         
     def set_location(self):
+#        try:
+#            city, isp = IPINFO.getIPAddr(self.ip)
+#            self.city = city.decode('utf-8')
+#            self.isp = isp.decode('utf-8')
+#        except:
+#            pass
         try:
-            city, isp = IPINFO.getIPAddr(self.ip)
-            self.city = city.decode('utf-8')
-            self.isp = isp.decode('utf-8')
+            loc = IPINFO.getIPAddr(self.ip)
+            self.city = loc['CITY'].decode('utf-8')
+            self.isp = loc['ISP'].decode('utf-8')
         except:
             pass
         

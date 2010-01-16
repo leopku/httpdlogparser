@@ -8,6 +8,8 @@ import re
 from urllib import unquote
 import glob
 import datetime
+import smtplib
+from email.MIMEText import MIMEText
 
 import MySQLdb
 import cjson
@@ -121,7 +123,7 @@ if __name__ == '__main__':
     periods = {'Day':'%Y-%m-%d', 'Week':'%u', 'Month':'%Y-%m'}
     colours = {'Day': '#ffae00', 'Week':'#52aa4b', 'Month': '#ff0000'}
     for period, format in periods.items():
-        sql = "SELECT DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log WHERE date_c >= DATE_SUB(CURDATE(), INTERVAL 7 %s) GROUP BY period DESC;" % (format, period)
+        sql = "SELECT DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log WHERE date_c >= DATE_SUB(CURDATE(), INTERVAL 7 %s) GROUP BY period DESC LIMIT 7;" % (format, period)
         logging.info('[counting sql]%s' % sql)
         cursor.execute(sql)
         rows = cursor.fetchall()
@@ -167,13 +169,21 @@ if __name__ == '__main__':
     report.write(cjson.encode(chart))
     report.close()
     
-    mail_content = """
-    The Report of Link Clicking.
-    Date: \t%s
-    Link: \thttp://zx.360quan.com/stats.html?ofc=9949/%s
-    """ % (yesterday.strftime('%Y-%m-%d'), yesterday.strftime('%Y-%m-%d'))
-    mail_file = open('mail.txt', 'w+')
-    mail_file.write(mail_content)
-    mail_file.close()
-    mail_cmd = 'mail -c %s -s "The Report of Link Clicking" %s < mail.txt' % (config_sets_9949[RUN_ENV]['mail_to'], config_sets_9949[RUN_ENV]['mail_cc'])
-    os.popen(mail_cmd)
+#    mail_content = """
+#    The Report of Link Clicking.
+#    Date: \t%s
+#    Link: \thttp://zx.360quan.com/stats.html?ofc=9949/%s
+#    """ % (yesterday.strftime('%Y-%m-%d'), yesterday.strftime('%Y-%m-%d'))
+#    mail_file = open('mail.txt', 'w+')
+#    mail_file.write(mail_content)
+#    mail_file.close()
+#    mail_cmd = 'mail -c %s -s "The Report of Link Clicking" %s < mail.txt' % (config_sets_9949[RUN_ENV]['mail_to'], config_sets_9949[RUN_ENV]['mail_cc'])
+#    os.popen(mail_cmd)
+    str_today = datetime.date.today().strftime('%Y-%m-%d')
+    server = smtplib.SMTP('localhost')
+    html = '<html><body><div><h1>Report of Link Clicking, %s</h1></div><div><a href="http://zx.360quan.com/stats.html?ofc=9949/%s">Report for %s</a></div></body></html>' % (str_today, str_today, str_today)
+    msg = MIMEText(html, 'html')
+    msg['From'] = 'noreply@360quan.com'
+    msg['To'] = '%s,%s' % (config_sets_9949[RUN_ENV]['mail_to'], config_sets_9949[RUN_ENV]['mail_cc'])
+    msg['Subject'] = 'Report of Link Clicking, %s' % str_today
+    server.sendmail(msg['From'], msg['To'], msg.as_string())

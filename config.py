@@ -24,7 +24,7 @@ config_sets_base = {
                              'passwd':'httpdlog',
                              'db': '',
                              'logging_level': logging.ERROR,
-                             'mail_to': 'fengyue@360quan.com,zhangyuxiang@360quan.com, liusong@360quan.com',
+                             'mail_to': 'fengyue@360quan.com, liusong@360quan.com',
                              'mail_cc': 'dan@360quan.com,uzi.refaeli@360quan.com'
                      },
                 'debug': {
@@ -61,3 +61,8 @@ config_sets_zx = copy.deepcopy(config_sets_base)
 config_sets_zx['production']['db'] = 'httpdlog'
 config_sets_zx['debug']['db'] = 'httpdlog_test'
 config_sets_zx['test']['db'] = 'httpdlog'
+
+BEANSDB_NUM = 16
+BEANSDB_CFG = {
+               "localhost:7902": range(BEANSDB_NUM), 
+               }
