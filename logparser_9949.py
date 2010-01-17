@@ -123,14 +123,13 @@ if __name__ == '__main__':
     periods = {'Day':'%Y-%m-%d', 'Week':'%u', 'Month':'%Y-%m'}
     colours = {'Day': '#ffae00', 'Week':'#52aa4b', 'Month': '#ff0000'}
     for period, format in periods.items():
-        sql = "SELECT DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log WHERE date_c >= DATE_SUB(CURDATE(), INTERVAL 7 %s) GROUP BY period DESC LIMIT 7;" % (format, period)
+        sql = "SELECT DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log WHERE date_c >= DATE_SUB('%s', INTERVAL 7 %s) GROUP BY period ORDER BY date_c DESC LIMIT 7;" % (format, yesterday.strftime('%Y-%m-%d'), period)
         logging.info('[counting sql]%s' % sql)
         cursor.execute(sql)
         rows = cursor.fetchall()
         
         l = line(text=period, colour=colours[period])
         l.dot_style = dot()
-        
         
         rows_list = list(rows)
         values = [0 for _ in range(7)]
@@ -179,7 +178,7 @@ if __name__ == '__main__':
 #    mail_file.close()
 #    mail_cmd = 'mail -c %s -s "The Report of Link Clicking" %s < mail.txt' % (config_sets_9949[RUN_ENV]['mail_to'], config_sets_9949[RUN_ENV]['mail_cc'])
 #    os.popen(mail_cmd)
-    str_today = datetime.date.today().strftime('%Y-%m-%d')
+    str_today = yesterday.strftime('%Y-%m-%d')
     server = smtplib.SMTP('localhost')
     html = '<html><body><div><h1>Report of Link Clicking, %s</h1></div><div><a href="http://zx.360quan.com/stats.html?ofc=9949/%s">Report for %s</a></div></body></html>' % (str_today, str_today, str_today)
     msg = MIMEText(html, 'html')
