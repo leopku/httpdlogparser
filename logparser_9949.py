@@ -61,9 +61,18 @@ class Guest9949(GuestBase):
         
 if __name__ == '__main__':
     
-    if len(sys.argv) >=2:
-        if sys.argv[1] in config_sets_9949.keys():
-            RUN_ENV = sys.argv[1]
+#    if len(sys.argv) >=2:
+#        if sys.argv[1] in config_sets_9949.keys():
+#            RUN_ENV = sys.argv[1]
+    import optparse
+    opp = optparse.OptionParser()
+    opp.add_option('-e', '--runenv', default='production', help='Run enviroment option, must be one of follows: production, debug or test.')
+    opp.add_option('-d', '--date', default=datetime.datetime.today().strftime('%Y-%m-%d'), help='parse logs of which day. Must be the format: %Y-%m-%d, example: 2010-12-29. ')
+    options, _ = opp.parse_args()
+    RUN_ENV = options.runenv
+    import time
+    t = time.strptime(options.date, '%Y-%m-%d')
+    current_day = datetime.datetime(*t[:6].date())
     
     LOG_FILENAME = os.path.join(os.path.dirname(__file__), '%s.log' %os.path.basename(__file__))
     LOG_FORMAT = '%(asctime)s | %(levelname)s |%(lineno)s | %(message)s'
@@ -81,10 +90,10 @@ if __name__ == '__main__':
         sys.exit(1)
     
     delta_one_day = datetime.timedelta(days=1)
-    yesterday = datetime.date.today() - delta_one_day
-    tomorrow = datetime.date.today() + delta_one_day
+    past_day = current_day - delta_one_day
+    next_day = current_day + delta_one_day
 
-    logfiles = glob.glob('/Data/log/9949/9949.cn-access_log.%s??' % yesterday.strftime('%Y%m%d'))
+    logfiles = glob.glob('/Data/log/9949/9949.cn-access_log.%s??' % past_day.strftime('%Y%m%d'))
     regex = r'POST /go\.html\?name=(?P<name>.*?)&u=(?P<dest>http://.*?) HTTP'
     for logfile in logfiles:
         logging.info('[log file]%s' % logfile)
@@ -123,7 +132,7 @@ if __name__ == '__main__':
     periods = {'Day':'%Y-%m-%d', 'Week':'%u', 'Month':'%Y-%m'}
     colours = {'Day': '#ffae00', 'Week':'#52aa4b', 'Month': '#ff0000'}
     for period, format in periods.items():
-        sql = "SELECT DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log WHERE date_c >= DATE_SUB('%s', INTERVAL 7 %s) GROUP BY period ORDER BY date_c DESC LIMIT 7;" % (format, yesterday.strftime('%Y-%m-%d'), period)
+        sql = "SELECT DATE_FORMAT(date_c, '%s') AS period, count(id) AS cnt FROM log WHERE date_c >= DATE_SUB('%s', INTERVAL 7 %s) GROUP BY period ORDER BY date_c DESC LIMIT 7;" % (format, past_day.strftime('%Y-%m-%d'), period)
         logging.info('[counting sql]%s' % sql)
         cursor.execute(sql)
         rows = cursor.fetchall()
@@ -153,7 +162,7 @@ if __name__ == '__main__':
             
         chart.add_element(l)
         
-    sql = "SELECT name, dest, COUNT(id) AS cnt FROM log WHERE date_c BETWEEN '%s 00:00:00' AND '%s 00:00:00' GROUP BY dest ORDER BY cnt DESC;" % (yesterday.strftime('%Y-%m-%d'), datetime.date.today().strftime('%Y-%m-%d'))
+    sql = "SELECT name, dest, COUNT(id) AS cnt FROM log WHERE date_c BETWEEN '%s 00:00:00' AND '%s 00:00:00' GROUP BY dest ORDER BY cnt DESC;" % (past_day.strftime('%Y-%m-%d'), current_day.strftime('%Y-%m-%d'))
     cursor.execute(sql)
     rows = cursor.fetchall()
     for row in rows:
@@ -163,7 +172,7 @@ if __name__ == '__main__':
         gridline['count'] = row['cnt']
         chart.add_grid_line(gridline)
         
-    reportfile = os.path.join(os.path.dirname(__file__), '9949', yesterday.strftime('%Y-%m-%d'))
+    reportfile = os.path.join(os.path.dirname(__file__), '9949', past_day.strftime('%Y-%m-%d'))
     report  = open(reportfile, 'w+')
     report.write(cjson.encode(chart))
     report.close()
@@ -172,17 +181,17 @@ if __name__ == '__main__':
 #    The Report of Link Clicking.
 #    Date: \t%s
 #    Link: \thttp://zx.360quan.com/stats.html?ofc=9949/%s
-#    """ % (yesterday.strftime('%Y-%m-%d'), yesterday.strftime('%Y-%m-%d'))
+#    """ % (past_day.strftime('%Y-%m-%d'), past_day.strftime('%Y-%m-%d'))
 #    mail_file = open('mail.txt', 'w+')
 #    mail_file.write(mail_content)
 #    mail_file.close()
 #    mail_cmd = 'mail -c %s -s "The Report of Link Clicking" %s < mail.txt' % (config_sets_9949[RUN_ENV]['mail_to'], config_sets_9949[RUN_ENV]['mail_cc'])
 #    os.popen(mail_cmd)
-    str_today = yesterday.strftime('%Y-%m-%d')
+    str_current_day = past_day.strftime('%Y-%m-%d')
     server = smtplib.SMTP('localhost')
-    html = '<html><body><div><h1>Report of Link Clicking, %s</h1></div><div><a href="http://zx.360quan.com/stats.html?ofc=9949/%s">Report for %s</a></div></body></html>' % (str_today, str_today, str_today)
+    html = '<html><body><div><h1>Report of Link Clicking, %s</h1></div><div><a href="http://zx.360quan.com/stats.html?ofc=9949/%s">Report for %s</a></div></body></html>' % (str_current_day, str_current_day, str_current_day)
     msg = MIMEText(html, 'html')
     msg['From'] = 'noreply@360quan.com'
     msg['To'] = '%s,%s' % (config_sets_9949[RUN_ENV]['mail_to'], config_sets_9949[RUN_ENV]['mail_cc'])
-    msg['Subject'] = 'Report of Link Clicking, %s' % str_today
+    msg['Subject'] = 'Report of Link Clicking, %s' % str_current_day
     server.sendmail(msg['From'], msg['To'], msg.as_string())
