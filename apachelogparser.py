@@ -54,13 +54,13 @@ class GuestBase:
         
     def set_location(self):
 #        try:
-#            city, isp = IPINFO.getIPAddr(self.ip)
+#            city, isp = IPINFO.getIPAddr_dict(self.ip)
 #            self.city = city.decode('utf-8')
 #            self.isp = isp.decode('utf-8')
 #        except:
 #            pass
         try:
-            loc = IPINFO.getIPAddr(self.ip)
+            loc = IPINFO.getIPAddr_dict(self.ip)
             self.city = loc['CITY'].decode('utf-8')
             self.isp = loc['ISP'].decode('utf-8')
         except:

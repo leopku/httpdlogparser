@@ -72,7 +72,7 @@ if __name__ == '__main__':
     RUN_ENV = options.runenv
     import time
     t = time.strptime(options.date, '%Y-%m-%d')
-    current_day = datetime.datetime(*t[:6].date())
+    current_day = datetime.datetime(*t[:6]).date()
     
     LOG_FILENAME = os.path.join(os.path.dirname(__file__), '%s.log' %os.path.basename(__file__))
     LOG_FORMAT = '%(asctime)s | %(levelname)s |%(lineno)s | %(message)s'
@@ -171,8 +171,11 @@ if __name__ == '__main__':
         gridline['dest'] = row['dest']
         gridline['count'] = row['cnt']
         chart.add_grid_line(gridline)
-        
-    reportfile = os.path.join(os.path.dirname(__file__), '9949', past_day.strftime('%Y-%m-%d'))
+    
+    if RUN_ENV == 'production':
+        reportfile = os.path.join(os.path.dirname(__file__), '9949', past_day.strftime('%Y-%m-%d'))
+    else:
+        reportfile = os.path.join(os.path.dirname(__file__), '9949', '_'.join((past_day.strftime('%Y-%m-%d'), RUN_ENV)))
     report  = open(reportfile, 'w+')
     report.write(cjson.encode(chart))
     report.close()
@@ -189,7 +192,10 @@ if __name__ == '__main__':
 #    os.popen(mail_cmd)
     str_current_day = past_day.strftime('%Y-%m-%d')
     server = smtplib.SMTP('localhost')
-    html = '<html><body><div><h1>Report of Link Clicking, %s</h1></div><div><a href="http://zx.360quan.com/stats.html?ofc=9949/%s">Report for %s</a></div></body></html>' % (str_current_day, str_current_day, str_current_day)
+    if RUN_ENV == 'production':
+        html = '<html><body><div><h1>Report of Link Clicking, %s</h1></div><div><a href="http://zx.360quan.com/stats.html?ofc=9949/%s">Report for %s</a></div></body></html>' % (str_current_day, str_current_day, str_current_day)
+    else:
+        html = '<html><body><div><h1>Report of Link Clicking, %s</h1></div><div><a href="http://zx.360quan.com/stats.html?ofc=9949/%s">Report for %s</a></div></body></html>' % (str_current_day, '_'.join((str_current_day, RUN_ENV)), str_current_day)
     msg = MIMEText(html, 'html')
     msg['From'] = 'noreply@360quan.com'
     msg['To'] = '%s,%s' % (config_sets_9949[RUN_ENV]['mail_to'], config_sets_9949[RUN_ENV]['mail_cc'])

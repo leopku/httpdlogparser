@@ -27,11 +27,11 @@ class IPInfo_mem(IPInfo):
         (self.firstIndex, self.lastIndex) = unpack('II', self.img[:8])
         self.indexCount = (self.lastIndex - self.firstIndex) / 7 + 1
         
-    def getIPAddr(self, ip):
+    def getIPAddr_dict(self, ip):
         location_dict = self.mc.get(ip)
         if location_dict is None:
             try:
-                city, isp = super(IPInfo_mem, self).getIPAddr(ip)
+                city, isp = self.getIPAddr(ip)
                 location_dict = {'CITY': city, 'ISP': isp}
                 self.mc.set(ip, location_dict)
             except:

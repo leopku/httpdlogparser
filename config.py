@@ -50,7 +50,7 @@ config_sets_base = {
 # config enviroment for 9949
 config_sets_9949 = copy.deepcopy(config_sets_base)
 config_sets_9949['production']['db'] = '9949'
-config_sets_9949['production']['mail_to'] += ', liujiejiao@360quan.com'
+config_sets_9949['production']['mail_to'] += ', liujiejiao@360quan.com, , chenjianyu@360quan.com, zhanglei02@360quan.com'
 
 config_sets_9949['debug']['db'] = '9949_test'
 

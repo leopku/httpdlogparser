@@ -69,7 +69,7 @@ class HttpdLogParser:
                 client.ip = ip_datetime[0]
                 
                 i = pyip.IPInfo(IPFILE)
-                city, isp = i.getIPAddr(client.ip)
+                city, isp = i.getIPAddr_dict(client.ip)
                 client.city = city.decode('utf8')
                 client.isp = isp.decode('utf8')
                 
